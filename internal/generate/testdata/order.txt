@@ -1,0 +1,22 @@
+
+type OrderDAO struct{
+	DB *sql.DB
+}
+
+func (dao *OrderDAO) Insert(vals ...*Order)(int64,error) {
+	var agrs = make([]interface,len(vals)*(3))
+	var str = ""
+	for k,v := range vals {
+		if k != 0 {
+			str += ","
+		}
+		str += "(?,?,?)"
+		args = append(args,v.OrderTime,v.OrderId,v.UserId)
+	}
+	sqlSen := "INSERT INTO `order`(`order_time`,`order_id`,`user_id`) VALUES" + str
+	res,err := dao.DB.Exec(sqlSen,args)
+	if err != nil {
+		return 0,err
+	}
+	return res.RowsAffected()
+}

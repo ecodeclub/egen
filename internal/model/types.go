@@ -14,6 +14,57 @@
 
 package model
 
+import (
+	"strings"
+)
+
 // Model 模型定义
 type Model struct {
+	TableName string
+	GoName    string
+	Fields    []Field
+}
+
+type Field struct {
+	ColName      string
+	IsPrimaryKey bool
+	OfWhere      bool
+	GoName       string
+}
+
+func (m *Model) InsertWithReplaceParameter() string {
+	var str strings.Builder
+	for k := range m.Fields {
+		if k != 0 {
+			str.WriteByte(',')
+		}
+		str.WriteByte('?')
+	}
+	return str.String()
+}
+
+func (m *Model) QuotedTableName() string {
+	return "`" + m.TableName + "`"
+}
+
+func (m *Model) QuotedExecArgsWithAll() string {
+	var str strings.Builder
+	for k, v := range m.Fields {
+		if k != 0 {
+			str.WriteByte(',')
+		}
+		str.WriteString("v." + v.GoName)
+	}
+	return str.String()
+}
+
+func (m *Model) QuotedAllCol() string {
+	var str strings.Builder
+	for k, v := range m.Fields {
+		if k != 0 {
+			str.WriteByte(',')
+		}
+		str.WriteString("`" + v.ColName + "`")
+	}
+	return str.String()
 }
