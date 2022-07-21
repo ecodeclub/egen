@@ -36,10 +36,11 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 				TableName: "user",
 				GoName:    "User",
 				Fields: []model.Field{
-					{ColName: "login_time", GoName: "LoginTime"},
-					{ColName: "first_name", GoName: "FirstName", Order: true},
-					{ColName: "last_name", GoName: "LastName", Order: true},
-					{ColName: "user_id", GoName: "UserId", IsPrimaryKey: true},
+					{ColName: "login_time", GoName: "LoginTime", GoType: "string"},
+					{ColName: "first_name", GoName: "FirstName", GoType: "string"},
+					{ColName: "last_name", GoName: "LastName", GoType: "string"},
+					{ColName: "user_id", GoName: "UserId", IsPrimaryKey: true, GoType: "uint32"},
+					{ColName: "password", GoName: "Password", GoType: "[]byte"},
 				},
 			},
 			wantErr:  nil,
@@ -51,18 +52,21 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 				TableName: "order",
 				GoName:    "Order",
 				Fields: []model.Field{
-					{ColName: "order_time", GoName: "OrderTime", Order: true},
-					{ColName: "order_id", GoName: "OrderId", Order: true},
-					{ColName: "user_id", GoName: "UserId", IsPrimaryKey: true},
+					{ColName: "order_time", GoName: "OrderTime", GoType: "string"},
+					{ColName: "order_id", GoName: "OrderId", GoType: "uint32"},
+					{ColName: "user_id", GoName: "UserId", IsPrimaryKey: true, GoType: "uint32"},
+					{ColName: "has_buy", GoName: "HasBuy", GoType: "bool"},
+					{ColName: "price", GoName: "Price", GoType: "float64"},
+					{ColName: "seller", GoName: "Seller", GoType: "*int"},
 				},
 			},
 			wantErr:  nil,
 			testdata: "./testdata/order.go",
 		},
 	}
-
+	
 	mg := &MySQLGenerator{}
-
+	
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			data, err := os.ReadFile(testCase.testdata)

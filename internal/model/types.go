@@ -29,18 +29,56 @@ type Field struct {
 	ColName      string
 	IsPrimaryKey bool
 	GoName       string
-	Order        bool
+	GoType       string
+}
+
+func (f *Field) IsInteger() bool {
+	switch f.GoType {
+	case "int64", "int32", "int16", "int8", "int", "uint64", "uint32", "uint16", "uint8", "uint":
+		return true
+	case "byte", "rune":
+		return true
+	}
+	return false
+}
+
+func (f *Field) IsFloat() bool {
+	switch f.GoType {
+	case "float32", "float64":
+		return true
+	}
+	return false
+}
+
+func (f *Field) IsString() bool {
+	return f.GoType == "string"
+}
+
+func (f *Field) IsBool() bool {
+	return f.GoType == "bool"
+}
+
+func (f *Field) IsSlice() bool {
+	return f.GoType[0:2] == "[]"
+}
+
+func (f *Field) IsPtr() bool {
+	return f.GoType[0] == '*'
 }
 
 func (m *Model) QuotedTableName() string {
 	return "`" + m.TableName + "`"
 }
 
-func (m *Model) QuotedExecArgsWithParameter(flag, owner, col string) string {
-	var str []string
+func (m *Model) QuotedExecArgsWithParameter(col []string, flag, owner string) string {
+	var str = make([]string, 0, len(m.Fields))
+	var strMap = make(map[string]int, len(m.Fields))
+	for k, v := range col {
+		strMap[v] = k
+	}
 	for _, v := range m.Fields {
-		if strings.Contains(col, v.ColName) {
-			str = append(str, flag+owner+"."+v.GoName)
+		if _, exist := strMap["`"+v.ColName+"`"]; exist {
+			str = append(str, flag+owner+v.GoName)
 		}
 	}
 	return strings.Join(str, ", ")
@@ -57,24 +95,22 @@ func (m *Model) InsertWithReplaceParameter() string {
 	return str.String()
 }
 
-func (m *Model) QuotedExecArgsWithAll() string {
-	var str strings.Builder
-	for k, v := range m.Fields {
-		if k != 0 {
-			str.WriteString(", ")
-		}
-		str.WriteString("v." + v.GoName)
+func (m *Model) QuotedAllCol() []string {
+	var cols = make([]string, 0, len(m.Fields))
+	for _, v := range m.Fields {
+		cols = append(cols, "`"+v.ColName+"`")
 	}
-	return str.String()
+	return cols
 }
 
-func (m *Model) QuotedAllCol() string {
-	var str strings.Builder
-	for k, v := range m.Fields {
-		if k != 0 {
-			str.WriteByte(',')
-		}
-		str.WriteString("`" + v.ColName + "`")
+func (*Model) AddToString(cols []string) string {
+	return strings.Join(cols, ",")
+}
+
+func (m *Model) QuotedRelationship() map[string]string {
+	relation := make(map[string]string, len(m.Fields))
+	for _, v := range m.Fields {
+		relation[v.ColName] = v.GoName
 	}
-	return str.String()
+	return relation
 }

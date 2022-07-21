@@ -5,7 +5,7 @@ func (dao *{{.GoName}}DAO) NewOne(row *sql.Row) (*{{.GoName}}, error) {
 		return nil, err
 	}
 	var val {{.GoName}}
-	err := row.Scan({{.QuotedExecArgsWithParameter "&" "val" .QuotedAllCol}})
+	err := row.Scan({{.QuotedExecArgsWithParameter .QuotedAllCol "&" "val." }})
 	return &val, err
 }
 
@@ -15,7 +15,7 @@ func (dao *{{.GoName}}DAO) SelectByRaw(ctx context.Context, query string, args .
 }
 
 func (dao *{{.GoName}}DAO) SelectByWhere(ctx context.Context, where string, args ...any) (*{{.GoName}}, error) {
-	s := "SELECT {{.QuotedAllCol}} FROM {{.QuotedTableName}} WHERE " + where
+	s := "SELECT {{.AddToString .QuotedAllCol}} FROM {{.QuotedTableName}} WHERE " + where
 	return dao.SelectByRaw(ctx, s, args...)
 }
 
@@ -26,7 +26,7 @@ func (dao *{{.GoName}}DAO) NewBatch(rows *sql.Rows) ([]*{{.GoName}}, error) {
 	var vals = make([]*{{.GoName}}, 0, {{len .Fields}})
 	for rows.Next() {
 		var val {{.GoName}}
-		if err := rows.Scan({{.QuotedExecArgsWithParameter "&" "val" .QuotedAllCol}}); err != nil {
+		if err := rows.Scan({{.QuotedExecArgsWithParameter .QuotedAllCol "&" "val." }}); err != nil {
 			return nil, err
 		}
 		vals = append(vals, &val)
@@ -43,6 +43,6 @@ func (dao *{{.GoName}}DAO) SelectBatchByRaw(ctx context.Context, query string, a
 }
 
 func (dao *{{.GoName}}DAO) SelectBatchByWhere(ctx context.Context, where string, args ...any) ([]*{{.GoName}}, error) {
-	s := "SELECT {{.QuotedAllCol}} FROM {{.QuotedTableName}} WHERE " + where
+	s := "SELECT {{.AddToString .QuotedAllCol}} FROM {{.QuotedTableName}} WHERE " + where
 	return dao.SelectBatchByRaw(ctx, s, args...)
 }

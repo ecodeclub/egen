@@ -3,6 +3,7 @@ package code
 import (
 	"context"
 	"database/sql"
+	"strings"
 )
 
 type {{.GoName}}DAO struct {
@@ -17,9 +18,9 @@ func (dao *{{.GoName}}DAO) Insert(ctx context.Context, vals ...*{{.GoName}}) (in
 			str += ", "
 		}
 		str += "({{.InsertWithReplaceParameter}})"
-		args = append(args, {{.QuotedExecArgsWithAll}})
+		args = append(args, {{.QuotedExecArgsWithParameter .QuotedAllCol "" "v."}})
 	}
-	sqlSen := "INSERT INTO {{.QuotedTableName}}({{.QuotedAllCol}}) VALUES" + str
+	sqlSen := "INSERT INTO {{.QuotedTableName}}({{.AddToString .QuotedAllCol}}) VALUES" + str
 	res, err := dao.DB.ExecContext(ctx, sqlSen, args...)
 	if err != nil {
 		return 0, err
