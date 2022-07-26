@@ -22,19 +22,6 @@ import (
 	"testing"
 )
 
-type User struct {
-	LoginTime string
-	FirstName string
-	UserId    uint32
-	LastName  string
-}
-
-type Order struct {
-	OrderTime string
-	OrderId   uint32
-	UserId    uint32
-}
-
 func TestMySQLGenerator_Generate(t *testing.T) {
 	testCases := []struct {
 		name     string
@@ -49,14 +36,14 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 				TableName: "user",
 				GoName:    "User",
 				Fields: []model.Field{
-					{ColName: "login_time", IsPrimaryKey: false, GoName: "LoginTime"},
-					{ColName: "first_name", IsPrimaryKey: false, GoName: "FirstName"},
-					{ColName: "last_name", IsPrimaryKey: false, GoName: "LastName"},
-					{ColName: "user_id", IsPrimaryKey: true, GoName: "UserId"},
+					{ColName: "login_time", GoName: "LoginTime"},
+					{ColName: "first_name", GoName: "FirstName", Order: true},
+					{ColName: "last_name", GoName: "LastName", Order: true},
+					{ColName: "user_id", GoName: "UserId", IsPrimaryKey: true},
 				},
 			},
 			wantErr:  nil,
-			testdata: "./testdata/user.txt",
+			testdata: "./testdata/user.go",
 		},
 		{
 			name: "order",
@@ -64,13 +51,13 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 				TableName: "order",
 				GoName:    "Order",
 				Fields: []model.Field{
-					{ColName: "order_time", IsPrimaryKey: false, GoName: "OrderTime"},
-					{ColName: "order_id", IsPrimaryKey: false, GoName: "OrderId"},
-					{ColName: "user_id", IsPrimaryKey: true, GoName: "UserId"},
+					{ColName: "order_time", GoName: "OrderTime", Order: true},
+					{ColName: "order_id", GoName: "OrderId", Order: true},
+					{ColName: "user_id", GoName: "UserId", IsPrimaryKey: true},
 				},
 			},
 			wantErr:  nil,
-			testdata: "./testdata/order.txt",
+			testdata: "./testdata/order.go",
 		},
 	}
 
@@ -79,17 +66,12 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			data, err := os.ReadFile(testCase.testdata)
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.Equal(t, nil, err)
 			testCase.wantCode = string(data)
 			w := &bytes.Buffer{}
 			err = mg.Generate(testCase.model, w)
 			assert.Equal(t, testCase.wantErr, err)
-			if err != nil {
-				t.Fatal(err)
-			}
-			assert.Equal(t, w.String(), testCase.wantCode)
+			assert.Equal(t, testCase.wantCode, w.String())
 		})
 	}
 }

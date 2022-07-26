@@ -24,29 +24,13 @@ type MySQLGenerator struct {
 }
 
 func (*MySQLGenerator) Generate(m *model.Model, writer io.Writer) error {
-
-	tMySQL := template.New("mysql")
-	tMySQL = template.Must(tMySQL.Parse(`
-type {{.GoName}}DAO struct{
-	DB *sql.DB
-}
-
-func (dao *{{.GoName}}DAO) Insert(vals ...*{{.GoName}})(int64,error) {
-	var agrs = make([]interface,len(vals)*({{len .Fields}}))
-	var str = ""
-	for k,v := range vals {
-		if k != 0 {
-			str += ","
+	var err error
+	tMySQL := template.Must(template.ParseGlob("./mysql_template/*.go.tpl"))
+	for _, v := range tMySQL.Templates() {
+		err = v.Execute(writer, m)
+		if err != nil {
+			return err
 		}
-		str += "({{.InsertWithReplaceParameter}})"
-		args = append(args,{{.QuotedExecArgsWithAll}})
 	}
-	sqlSen := "INSERT INTO {{.QuotedTableName}}({{.QuotedAllCol}}) VALUES" + str
-	res,err := dao.DB.Exec(sqlSen,args)
-	if err != nil {
-		return 0,err
-	}
-	return res.RowsAffected()
-}`))
-	return tMySQL.Execute(writer, m)
+	return nil
 }

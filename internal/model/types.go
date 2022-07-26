@@ -28,8 +28,22 @@ type Model struct {
 type Field struct {
 	ColName      string
 	IsPrimaryKey bool
-	OfWhere      bool
 	GoName       string
+	Order        bool
+}
+
+func (m *Model) QuotedTableName() string {
+	return "`" + m.TableName + "`"
+}
+
+func (m *Model) QuotedExecArgsWithParameter(flag, owner, col string) string {
+	var str []string
+	for _, v := range m.Fields {
+		if strings.Contains(col, v.ColName) {
+			str = append(str, flag+owner+"."+v.GoName)
+		}
+	}
+	return strings.Join(str, ", ")
 }
 
 func (m *Model) InsertWithReplaceParameter() string {
@@ -43,15 +57,11 @@ func (m *Model) InsertWithReplaceParameter() string {
 	return str.String()
 }
 
-func (m *Model) QuotedTableName() string {
-	return "`" + m.TableName + "`"
-}
-
 func (m *Model) QuotedExecArgsWithAll() string {
 	var str strings.Builder
 	for k, v := range m.Fields {
 		if k != 0 {
-			str.WriteByte(',')
+			str.WriteString(", ")
 		}
 		str.WriteString("v." + v.GoName)
 	}
