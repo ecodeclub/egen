@@ -11,7 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+package cmd
 
-package model
+import (
+	"github.com/gotomicro/egen/internal/generate"
+	"github.com/gotomicro/egen/internal/model/ast"
+	"os"
+	"path/filepath"
+)
 
-// 在这里提供基于 AST 的实现。
+func Cmd() {
+	mg := generate.MySQLGenerator{}
+	path, _ := filepath.Abs("./cmd/egen/data/data.go")
+	for _, v := range ast.ParseModel(ast.LookUp(path, nil)) {
+		mg.Generate(&v, os.Stdout)
+	}
+}
