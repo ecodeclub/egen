@@ -20,9 +20,11 @@ import (
 
 // Model 模型定义
 type Model struct {
-	TableName string
-	GoName    string
-	Fields    []Field
+	TableName    string
+	GoName       string
+	Fields       []Field
+	PkgName      string
+	ExtralImport string
 }
 
 type Field struct {
@@ -30,6 +32,19 @@ type Field struct {
 	IsPrimaryKey bool `mapstructure:"PrimaryKey"`
 	GoName       string
 	GoType       string
+}
+
+type PkgInfor struct {
+	PkgName      string
+	ExtralImport string
+}
+
+type Option func(m *Model)
+
+func WithImports(imports string) Option {
+	return func(m *Model) {
+		m.ExtralImport = imports
+	}
 }
 
 func (f *Field) IsInteger() bool {

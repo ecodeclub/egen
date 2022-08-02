@@ -16,34 +16,21 @@ package generate
 
 import (
 	"embed"
-	"fmt"
 	"github.com/gotomicro/egen/internal/model"
 	"io"
-	"log"
 	"text/template"
 )
 
-type MySQLGenerator struct {
-}
+type MySQLGenerator struct{}
 
 //go:embed mysql_template
 var f embed.FS
 
-func (*MySQLGenerator) Generate(m *model.Model, writer io.Writer) error {
+func (*MySQLGenerator) Generate(m model.Model, writer io.Writer) error {
 	var err error
-	fmt.Println(f)
-	files := []string{"insert.gohtml", "select.gohtml", "update.gohtml", "delete.gohtml"}
 	tMySQL, err := template.ParseFS(f, "mysql_template/*.gohtml")
 	if err != nil {
-		log.Println(err)
 		return err
 	}
-	for _, v := range files {
-		t := tMySQL.Lookup(v)
-		err = t.Execute(writer, m)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return tMySQL.ExecuteTemplate(writer, "file.gohtml", &m)
 }

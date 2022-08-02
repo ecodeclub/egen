@@ -1,0 +1,18 @@
+package code
+
+import (
+	"context"
+	"database/sql"
+	"strings"
+	{{- if ne .ExtralImport ""}}
+	"{{.ExtralImport}}"
+	{{- end}}
+)
+
+type {{.GoName}}DAO struct {
+	DB *sql.DB
+}
+{{template "insert" .}}
+{{template "select" .}}
+{{template "update" .}}
+{{template "delete" .}}

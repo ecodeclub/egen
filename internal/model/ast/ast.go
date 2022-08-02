@@ -24,8 +24,9 @@ import (
 )
 
 type fileVisitor struct {
-	ans   Annotations
-	types []*typeVisitor
+	ans     Annotations
+	types   []*typeVisitor
+	pkgName string
 }
 
 type typeVisitor struct {
@@ -49,6 +50,7 @@ type Field struct {
 type File struct {
 	Annotations
 	TypeNodes []TypeNode
+	PkgName   string
 }
 
 func (f *fileVisitor) Get() File {
@@ -59,24 +61,29 @@ func (f *fileVisitor) Get() File {
 	return File{
 		Annotations: f.ans,
 		TypeNodes:   types,
+		PkgName:     f.pkgName,
 	}
 }
 
 func (f *fileVisitor) Visit(node ast.Node) ast.Visitor {
-	file, ok := node.(*ast.File)
-	if ok {
-		f.ans = newAnnotations(file.Doc)
+	switch node := node.(type) {
+	case *ast.File:
+		f.pkgName = node.Name.Name
+		f.ans = newAnnotations(node.Doc)
 		return f
-	}
-	typ, ok := node.(*ast.TypeSpec)
-	if ok {
-		res := &typeVisitor{
-			ans:    newAnnotations(typ.Doc),
-			fields: make([]Field, 0),
-			GoName: typ.Name.Name,
+	case *ast.GenDecl:
+		if len(node.Specs) == 1 {
+			tp, ok := node.Specs[0].(*ast.TypeSpec)
+			if ok {
+				res := &typeVisitor{
+					GoName: tp.Name.Name,
+					ans:    newAnnotations(node.Doc),
+					fields: make([]Field, 0),
+				}
+				f.types = append(f.types, res)
+				return res
+			}
 		}
-		f.types = append(f.types, res)
-		return res
 	}
 	return f
 }
@@ -106,7 +113,7 @@ func LookUp(path string, src any) File {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, path, src, parser.ParseComments)
 	if err != nil {
-		panic(err)
+		return File{}
 	}
 	fv := &fileVisitor{}
 	ast.Walk(fv, f)

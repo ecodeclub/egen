@@ -12,12 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
-import "github.com/gotomicro/egen/cmd"
+import (
+	"flag"
+	"fmt"
+	daocmd "github.com/gotomicro/egen/cmd/egen/dao"
+	"os"
+)
 
-// 主函数入口
-func main() {
-	println("hello gen")
-	cmd.Cmd()
+var (
+	longHelp  = flag.Bool("help", false, "提供帮助")
+	shortHelp = flag.Bool("h", false, "提供帮助")
+)
+
+func Execute() {
+	flag.Parse()
+	if len(flag.Args()) > 0 {
+		switch flag.Args()[0] {
+		case "dao":
+			daocmd.ExecDao(os.Args[2:])
+		default:
+			usage()
+		}
+	} else {
+		usage()
+	}
+}
+
+func usage() {
+	fmt.Println("提供以下几种命令:")
+	daocmd.DaoFlagSet.Usage()
+}
+
+func Help() {
+	if *shortHelp || *longHelp {
+		usage()
+	}
 }

@@ -1,31 +1,30 @@
-
-
-func (dao *{{.GoName}}DAO) NewOne(row *sql.Row) (*{{.GoName}}, error) {
+{{- define "select"}}
+func (dao *{{.GoName}}DAO) NewOne(row *sql.Row) (*{{.PkgName}}{{.GoName}}, error) {
 	if err := row.Err(); err != nil {
 		return nil, err
 	}
-	var val {{.GoName}}
+	var val {{.PkgName}}{{.GoName}}
 	err := row.Scan({{.QuotedExecArgsWithParameter .QuotedAllCol "&" "val." }})
 	return &val, err
 }
 
-func (dao *{{.GoName}}DAO) SelectByRaw(ctx context.Context, query string, args ...any) (*{{.GoName}}, error) {
+func (dao *{{.GoName}}DAO) SelectByRaw(ctx context.Context, query string, args ...any) (*{{.PkgName}}{{.GoName}}, error) {
 	row := dao.DB.QueryRowContext(ctx, query, args...)
 	return dao.NewOne(row)
 }
 
-func (dao *{{.GoName}}DAO) SelectByWhere(ctx context.Context, where string, args ...any) (*{{.GoName}}, error) {
+func (dao *{{.GoName}}DAO) SelectByWhere(ctx context.Context, where string, args ...any) (*{{.PkgName}}{{.GoName}}, error) {
 	s := "SELECT {{.AddToString .QuotedAllCol}} FROM {{.QuotedTableName}} WHERE " + where
 	return dao.SelectByRaw(ctx, s, args...)
 }
 
-func (dao *{{.GoName}}DAO) NewBatch(rows *sql.Rows) ([]*{{.GoName}}, error) {
+func (dao *{{.GoName}}DAO) NewBatch(rows *sql.Rows) ([]*{{.PkgName}}{{.GoName}}, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	var vals = make([]*{{.GoName}}, 0, {{len .Fields}})
+	var vals = make([]*{{.PkgName}}{{.GoName}}, 0, {{len .Fields}})
 	for rows.Next() {
-		var val {{.GoName}}
+		var val {{.PkgName}}{{.GoName}}
 		if err := rows.Scan({{.QuotedExecArgsWithParameter .QuotedAllCol "&" "val." }}); err != nil {
 			return nil, err
 		}
@@ -34,7 +33,7 @@ func (dao *{{.GoName}}DAO) NewBatch(rows *sql.Rows) ([]*{{.GoName}}, error) {
 	return vals, nil
 }
 
-func (dao *{{.GoName}}DAO) SelectBatchByRaw(ctx context.Context, query string, args ...any) ([]*{{.GoName}}, error) {
+func (dao *{{.GoName}}DAO) SelectBatchByRaw(ctx context.Context, query string, args ...any) ([]*{{.PkgName}}{{.GoName}}, error) {
 	rows, err := dao.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -42,7 +41,8 @@ func (dao *{{.GoName}}DAO) SelectBatchByRaw(ctx context.Context, query string, a
 	return dao.NewBatch(rows)
 }
 
-func (dao *{{.GoName}}DAO) SelectBatchByWhere(ctx context.Context, where string, args ...any) ([]*{{.GoName}}, error) {
+func (dao *{{.GoName}}DAO) SelectBatchByWhere(ctx context.Context, where string, args ...any) ([]*{{.PkgName}}{{.GoName}}, error) {
 	s := "SELECT {{.AddToString .QuotedAllCol}} FROM {{.QuotedTableName}} WHERE " + where
 	return dao.SelectBatchByRaw(ctx, s, args...)
 }
+{{- end}}

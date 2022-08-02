@@ -73,7 +73,7 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 			assert.Equal(t, nil, err)
 			testCase.wantCode = string(data)
 			w := &bytes.Buffer{}
-			err = mg.Generate(testCase.model, w)
+			err = mg.Generate(*testCase.model, w)
 			assert.Equal(t, testCase.wantErr, err)
 			assert.Equal(t, testCase.wantCode, w.String())
 		})

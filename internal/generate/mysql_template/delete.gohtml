@@ -1,5 +1,4 @@
-
-
+{{- define "delete"}}
 func (dao *{{.GoName}}DAO) DeleteByWhere(ctx context.Context, where string, args ...any) (int64, error) {
 	s := "DELETE FROM {{.QuotedTableName}} WHERE " + where
 	return dao.DeleteByRaw(ctx, s, args...)
@@ -12,3 +11,4 @@ func (dao *{{.GoName}}DAO) DeleteByRaw(ctx context.Context, query string, args .
 	}
 	return res.RowsAffected()
 }
+{{- end}}
