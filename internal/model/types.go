@@ -27,7 +27,7 @@ type Model struct {
 
 type Field struct {
 	ColName      string
-	IsPrimaryKey bool
+	IsPrimaryKey bool `mapstructure:"PrimaryKey"`
 	GoName       string
 	GoType       string
 }

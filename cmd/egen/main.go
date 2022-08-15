@@ -14,7 +14,10 @@
 
 package main
 
+import "github.com/gotomicro/egen/cmd"
+
 // 主函数入口
 func main() {
 	println("hello gen")
+	cmd.Cmd()
 }

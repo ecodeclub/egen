@@ -64,9 +64,9 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 			testdata: "./testdata/order.go",
 		},
 	}
-	
+
 	mg := &MySQLGenerator{}
-	
+
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			data, err := os.ReadFile(testCase.testdata)
