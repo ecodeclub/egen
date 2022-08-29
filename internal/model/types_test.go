@@ -48,6 +48,12 @@ func InitType() *Model {
 	}
 }
 
+func TestWithImports(t *testing.T) {
+	model := InitModel()
+	WithImports("imports")(model)
+	assert.Equal(t, "imports", model.ExtralImport)
+}
+
 func TestModel_QuotedExecArgsWithParameter(t *testing.T) {
 	dao := InitModel()
 	args := dao.QuotedExecArgsWithParameter(dao.QuotedAllCol(), "&", "user.")

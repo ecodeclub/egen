@@ -20,17 +20,23 @@ import (
 	"strings"
 )
 
-func ParseModel(contents File) []model.Model {
+func ParseModel(contents File, options ...model.Option) []model.Model {
 	var models = make([]model.Model, 0, len(contents.TypeNodes))
 	for _, v := range contents.TypeNodes {
 		models = append(models, parseNode(v))
+	}
+	for k := range models {
+		for _, option := range options {
+			option(&models[k])
+		}
+		models[k].PkgName = contents.PkgName + "."
 	}
 	return models
 }
 
 func parseNode(typeNode TypeNode) model.Model {
 	fields := make([]model.Field, 0, len(typeNode.Fields))
-	tableName := convert(typeNode.GoName)
+	tableName := Convert(typeNode.GoName)
 
 	for _, v := range typeNode.Ans {
 		if v.Key == "TableName" {
@@ -49,14 +55,14 @@ func parseNode(typeNode TypeNode) model.Model {
 }
 
 func parseField(field Field) model.Field {
-	colName := convert(field.GoName)
+	colName := Convert(field.GoName)
 	isPrimaryKey := false
 	for _, v := range field.Ans {
 		switch v.Key {
 		case "ColName":
 			colName = v.Value
 		case "PrimaryKey":
-			if v.Value == "true" {
+			if v.Value != "false" {
 				isPrimaryKey = true
 			}
 		}
@@ -69,7 +75,7 @@ func parseField(field Field) model.Field {
 	}
 }
 
-func convert(name string) string {
+func Convert(name string) string {
 	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
 	snake := matchFirstCap.ReplaceAllString(name, "${1}_${2}")

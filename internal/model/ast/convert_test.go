@@ -29,37 +29,38 @@ func TestParseModel(t *testing.T) {
 			src: `
 package model
 
-type (
-	Into struct {
-		// @ColName countryside
-		CountrySide string
-		// @PrimaryKey true
-		Suburb  string
-	}
-	// @TableName Order
-	Order struct{
+type Into struct {
+	// @ColName countryside
+	CountrySide string
+	// @PrimaryKey true
+	Suburb  string
+}
+
+// @TableName Order
+type Order struct{
 	// @PrimaryKey true
 	// @ColName user_id
-		UserId uint32
-	}
-)
+	UserId uint32
+}
 `, want: []model.Model{
-			model.Model{
-				TableName: "into",
-				GoName:    "Into",
-				Fields: []model.Field{
-					model.Field{ColName: "countryside", IsPrimaryKey: false, GoName: "CountrySide", GoType: "string"},
-					model.Field{ColName: "suburb", IsPrimaryKey: true, GoName: "Suburb", GoType: "string"},
+				model.Model{
+					PkgName:   "model.",
+					TableName: "into",
+					GoName:    "Into",
+					Fields: []model.Field{
+						model.Field{ColName: "countryside", IsPrimaryKey: false, GoName: "CountrySide", GoType: "string"},
+						model.Field{ColName: "suburb", IsPrimaryKey: true, GoName: "Suburb", GoType: "string"},
+					},
+				},
+				model.Model{
+					PkgName:   "model.",
+					TableName: "Order",
+					GoName:    "Order",
+					Fields: []model.Field{
+						model.Field{ColName: "user_id", IsPrimaryKey: true, GoName: "UserId", GoType: "uint32"},
+					},
 				},
 			},
-			model.Model{
-				TableName: "Order",
-				GoName:    "Order",
-				Fields: []model.Field{
-					model.Field{ColName: "user_id", IsPrimaryKey: true, GoName: "UserId", GoType: "uint32"},
-				},
-			},
-		},
 		},
 	}
 	for _, tc := range testCases {
@@ -68,7 +69,7 @@ type (
 }
 
 func TestConvert(t *testing.T) {
-	assert.Equal(t, "first_name", convert("FirstName"))
-	assert.Equal(t, "order", convert("Order"))
-	assert.Equal(t, "into", convert("into"))
+	assert.Equal(t, "first_name", Convert("FirstName"))
+	assert.Equal(t, "order", Convert("Order"))
+	assert.Equal(t, "into", Convert("into"))
 }

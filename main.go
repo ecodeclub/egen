@@ -11,19 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package cmd
 
-import (
-	"github.com/gotomicro/egen/internal/generate"
-	"github.com/gotomicro/egen/internal/model/ast"
-	"os"
-	"path/filepath"
-)
+package main
 
-func Cmd() {
-	mg := generate.MySQLGenerator{}
-	path, _ := filepath.Abs("./cmd/egen/data/data.go")
-	for _, v := range ast.ParseModel(ast.LookUp(path, nil)) {
-		mg.Generate(&v, os.Stdout)
-	}
+import cmd "github.com/gotomicro/egen/cmd/egen"
+
+// 主函数入口
+func main() {
+	println("hello gen")
+	cmd.Execute()
 }

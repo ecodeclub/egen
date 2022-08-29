@@ -28,22 +28,22 @@ func TestFileVisitor_Get(t *testing.T) {
 			src: `
 package model
 
-type (
-	Into struct {
-		// @ColName countryside
-		CountrySide string
-		// @PrimaryKey true
-		Suburb  string
-	}
-	// @TableName Order
-	Order struct{
+type Into struct {
+	// @ColName countryside
+	CountrySide string
 	// @PrimaryKey true
+	Suburb  string
+}
+
+// @TableName Order
+type Order struct{
+	// @PrimaryKey
 	// @ColName user_id
-		UserId uint32
-	}
-)
+	UserId uint32
+}
 `,
 			want: File{
+				PkgName: "model",
 				TypeNodes: []TypeNode{
 					{
 						GoName: "Into",
@@ -89,8 +89,7 @@ type (
 								Annotations: Annotations{
 									Ans: []Annotation{
 										{
-											Key:   "PrimaryKey",
-											Value: "true",
+											Key: "PrimaryKey",
 										},
 										{
 											Key:   "ColName",
@@ -130,7 +129,6 @@ type (
 func assertAnnotations(t *testing.T, wantAns Annotations, dst Annotations) {
 	want := wantAns.Ans
 	if len(want) != len(dst.Ans) {
-		
 		t.Fatal()
 	}
 	for i, an := range want {

@@ -2,6 +2,8 @@
   "**/*.go": "// Copyright 2021 gotomicro",
   "**/*.{yml,toml}": "# Copyright 2021 gotomicro",
   "ignore": [
-    "internal/generate/testdata"
+    "internal/generate/testdata",
+    "internal/integration/dao",
+    "internal/integration/generate"
   ]
 }

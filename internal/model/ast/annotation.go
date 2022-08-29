@@ -45,10 +45,14 @@ func newAnnotations(cg *ast.CommentGroup) Annotations {
 					Key:   slice[0][1:],
 					Value: slice[1],
 				})
+			} else {
+				ans = append(ans, Annotation{
+					Key: slice[0][1:],
+				})
 			}
 		}
 	}
-	
+
 	return Annotations{
 		Ans: ans,
 	}

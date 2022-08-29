@@ -12,16 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package generate
+package utils
 
 import (
-	"github.com/gotomicro/egen/internal/model"
-	"io"
+	"os"
 )
 
-// Generator 核心接口
-// 将生成的代码写入到 writer 里面
-// 实际中 writer 可能代表一个文件，也可以是 bytes.Buffer
-type Generator interface {
-	Generate(m model.Model, writer io.Writer) error
+func IsDir(path string) bool {
+	f, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return f.IsDir()
+}
+
+func IsExist(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

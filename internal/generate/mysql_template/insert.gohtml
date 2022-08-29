@@ -1,17 +1,9 @@
-package code
-
-import (
-	"context"
-	"database/sql"
-	"strings"
-)
-
-type {{.GoName}}DAO struct {
-	DB *sql.DB
-}
-
-func (dao *{{.GoName}}DAO) Insert(ctx context.Context, vals ...*{{.GoName}}) (int64, error) {
-	var args = make([]interface{}, len(vals)*({{len .Fields}}))
+{{- define "insert"}}
+func (dao *{{.GoName}}DAO) Insert(ctx context.Context, vals ...*{{.PkgName}}{{.GoName}}) (int64, error) {
+	if len(vals) == 0 || vals == nil {
+		return 0, nil
+	}
+	var args = make([]interface{}, 0, len(vals)*({{len .Fields}}))
 	var str = ""
 	for k, v := range vals {
 		if k != 0 {
@@ -27,3 +19,4 @@ func (dao *{{.GoName}}DAO) Insert(ctx context.Context, vals ...*{{.GoName}}) (in
 	}
 	return res.RowsAffected()
 }
+{{- end}}
