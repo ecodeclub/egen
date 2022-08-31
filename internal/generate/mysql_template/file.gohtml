@@ -3,6 +3,7 @@ package code
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
 	{{- if ne .ExtralImport ""}}
 	"{{.ExtralImport}}"
@@ -10,7 +11,49 @@ import (
 )
 
 type {{.GoName}}DAO struct {
-	DB *sql.DB
+	session interface {
+		QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+		QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+		ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	}
+}
+
+type {{.GoName}}TxDAO struct {
+	*{{.GoName}}DAO
+}
+
+func (dao *{{.GoName}}TxDAO) Rollback() error {
+	tx, ok := dao.session.(*sql.Tx)
+	if !ok {
+		return errors.New("非事务")
+	}
+	return tx.Rollback()
+}
+
+func (dao *{{.GoName}}TxDAO) Commit() error {
+	tx, ok := dao.session.(*sql.Tx)
+	if !ok {
+		return errors.New("非事务")
+	}
+	return tx.Commit()
+}
+
+func (dao *{{.GoName}}DAO) Begin(ctx context.Context, opts *sql.TxOptions) (*{{.GoName}}TxDAO, error) {
+	db, ok := dao.session.(*sql.DB)
+	if !ok {
+		return nil, errors.New("不能在事务中开启事务")
+	}
+	tx, err := db.BeginTx(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &{{.GoName}}TxDAO{
+		{{.GoName}}DAO: &{{.GoName}}DAO{tx},
+	}, nil
+}
+
+func New{{.GoName}}DAO(db *sql.DB) (*{{.GoName}}DAO, error) {
+	return &{{.GoName}}DAO{db}, nil
 }
 {{template "insert" .}}
 {{template "select" .}}

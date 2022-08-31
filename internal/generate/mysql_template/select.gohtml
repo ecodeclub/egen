@@ -9,7 +9,7 @@ func (dao *{{.GoName}}DAO) NewOne(row *sql.Row) (*{{.PkgName}}{{.GoName}}, error
 }
 
 func (dao *{{.GoName}}DAO) SelectByRaw(ctx context.Context, query string, args ...any) (*{{.PkgName}}{{.GoName}}, error) {
-	row := dao.DB.QueryRowContext(ctx, query, args...)
+	row := dao.session.QueryRowContext(ctx, query, args...)
 	return dao.NewOne(row)
 }
 
@@ -34,7 +34,7 @@ func (dao *{{.GoName}}DAO) NewBatch(rows *sql.Rows) ([]*{{.PkgName}}{{.GoName}},
 }
 
 func (dao *{{.GoName}}DAO) SelectBatchByRaw(ctx context.Context, query string, args ...any) ([]*{{.PkgName}}{{.GoName}}, error) {
-	rows, err := dao.DB.QueryContext(ctx, query, args...)
+	rows, err := dao.session.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

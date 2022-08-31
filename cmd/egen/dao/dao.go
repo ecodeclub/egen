@@ -50,7 +50,9 @@ func ExecDao(args []string) {
 	if len(args) < 1 {
 		log.Println("将扫描当前目录下的所有go文件,并生成对应的type_dao.go")
 	}
-	DaoFlagSet.Parse(args)
+	if err := DaoFlagSet.Parse(args); err != nil {
+		log.Println(err)
+	}
 	if err := initDao(src, dst, dataModel, path); err != nil {
 		log.Println(err)
 	}

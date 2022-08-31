@@ -51,7 +51,7 @@ func execWrite(src, dst, name, path string) error {
 				if err != nil {
 					return err
 				}
-				srcFiles = append(srcFiles, src+"/"+file.Name())
+				srcFiles = append(srcFiles, filepath.Join(src, file.Name()))
 			}
 		}
 	} else {
@@ -76,32 +76,25 @@ func WriteToFile(models []model.Model, dst, name string) error {
 		if name != "" && v.GoName != name {
 			continue
 		}
+		var f *os.File
+		var err error
 
 		if utils.IsDir(dst) {
 			// 可能要对多个文件进行写入 写入完成后直接close
-			f, err := os.Create(dst + fmt.Sprintf("/%s_dao.go", ast.Convert(v.TableName)))
-			if err != nil {
-				f.Close() // 防止内存泄露
-				return err
-			}
-			if err = mg.Generate(v, f); err != nil {
-				f.Close() // 防止内存泄露
-				return err
-			}
-			f.Close()
-			fmt.Println(f.Name(), "已完成")
+			f, err = os.Create(filepath.Join(dst, fmt.Sprintf("%s_dao.go", ast.Convert(v.TableName))))
 		} else {
-			f, err := os.Create(dst)
-			if err != nil {
-				return err
-			}
-
-			if err = mg.Generate(v, f); err != nil {
-				return err
-			}
-			f.Close() // 只有单个文件进行写入 直接defer
-			fmt.Println(f.Name(), "已完成")
+			f, err = os.Create(dst)
 		}
+		if err != nil {
+			return err
+		}
+
+		err = mg.Generate(v, f)
+		if err != nil {
+			return err
+		}
+		f.Close()
+		fmt.Println(f.Name(), "已完成")
 	}
 	return nil
 }
