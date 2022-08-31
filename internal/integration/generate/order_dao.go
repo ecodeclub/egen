@@ -8,8 +8,51 @@ import (
 	"strings"
 )
 
+type handler interface {
+	Exec(query string, args ...any) (sql.Result, error)
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	QueryRow(query string, args ...any) *sql.Row
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+}
+
+type handlerTx interface {
+	Rollback() error
+	Commit() error
+}
+
 type OrderDAO struct {
-	DB *sql.DB
+	handler
+	handlerTx
+}
+
+func (dao *OrderDAO) initDatabase(operator interface{}) {
+	switch x := operator.(type) {
+	case handler:
+		dao.handlerTx = nil
+		dao.handler = x
+	case handlerTx:
+		// 同时赋值
+		dao.handlerTx = x
+		dao.handler = x.(handler)
+	}
+}
+
+// 调用提交及回滚全权交给用户
+func (dao *OrderDAO) commit() error {
+	if dao.handlerTx != nil {
+		return dao.handlerTx.Commit()
+	}
+	// 不存在调用 不应报错
+	return nil
+}
+
+func (dao *OrderDAO) rollback() error {
+	if dao.handlerTx != nil {
+		return dao.handlerTx.Rollback()
+	}
+	return nil
 }
 
 func (dao *OrderDAO) Insert(ctx context.Context, vals ...*Order) (int64, error) {
@@ -26,7 +69,7 @@ func (dao *OrderDAO) Insert(ctx context.Context, vals ...*Order) (int64, error) 
 		args = append(args, v.UserId, v.OrderId, v.Price)
 	}
 	sqlSen := "INSERT INTO `order`(`user_id`,`order_id`,`price`) VALUES" + str
-	res, err := dao.DB.ExecContext(ctx, sqlSen, args...)
+	res, err := dao.handler.ExecContext(ctx, sqlSen, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -43,7 +86,7 @@ func (dao *OrderDAO) NewOne(row *sql.Row) (*Order, error) {
 }
 
 func (dao *OrderDAO) SelectByRaw(ctx context.Context, query string, args ...any) (*Order, error) {
-	row := dao.DB.QueryRowContext(ctx, query, args...)
+	row := dao.handler.QueryRowContext(ctx, query, args...)
 	return dao.NewOne(row)
 }
 
@@ -68,7 +111,7 @@ func (dao *OrderDAO) NewBatch(rows *sql.Rows) ([]*Order, error) {
 }
 
 func (dao *OrderDAO) SelectBatchByRaw(ctx context.Context, query string, args ...any) ([]*Order, error) {
-	rows, err := dao.DB.QueryContext(ctx, query, args...)
+	rows, err := dao.handler.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +199,7 @@ func (dao *OrderDAO) quotedSpecificCol(val *Order, cols ...string) ([]interface{
 }
 
 func (dao *OrderDAO) UpdateColsByRaw(ctx context.Context, query string, args ...any) (int64, error) {
-	res, err := dao.DB.ExecContext(ctx, query, args...)
+	res, err := dao.handler.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -169,7 +212,7 @@ func (dao *OrderDAO) DeleteByWhere(ctx context.Context, where string, args ...an
 }
 
 func (dao *OrderDAO) DeleteByRaw(ctx context.Context, query string, args ...any) (int64, error) {
-	res, err := dao.DB.ExecContext(ctx, query, args...)
+	res, err := dao.handler.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}

@@ -26,6 +26,7 @@ import (
 
 var (
 	src, dst, dataModel, path string
+	tx                        bool
 	DaoFlagSet                = initDaoFlagSet()
 	tips                      = `
   -src file/dir -dst file/dir -type string  -> 将src中的指定的type生成到./dst中
@@ -66,7 +67,7 @@ func initDao(src, dst, dataModel, path string) error {
 			return err
 		}
 	}
-	return execWrite(src, dst, dataModel, path)
+	return execWrite(tx, src, dst, dataModel, path)
 }
 
 func initDaoFlagSet() *flag.FlagSet {
@@ -82,6 +83,7 @@ func initDaoFlagSet() *flag.FlagSet {
 	daoFlagSet.StringVar(&src, "src", defaultSrc, "读取结构体的文件或目录")
 	daoFlagSet.StringVar(&dataModel, "type", allModel, "结构体名称")
 	daoFlagSet.StringVar(&path, "import", "", "import时的路径")
+	daoFlagSet.BoolVar(&tx, "tx", false, "是否开启事务")
 
 	return daoFlagSet
 }

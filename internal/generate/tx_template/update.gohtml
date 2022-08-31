@@ -1,0 +1,126 @@
+{{- define "update"}}
+func (dao *{{.GoName}}DAO) UpdateSpecificColsByWhere(ctx context.Context, val *{{.PkgName}}{{.GoName}}, cols []string, where string, args ...any) (int64, error) {
+	newArgs, colAfter := dao.quotedSpecificCol(val, cols...)
+	newArgs = append(newArgs, args...)
+	s := "UPDATE {{.QuotedTableName}} SET " + colAfter + " WHERE " + where
+	ret, err := dao.UpdateColsByRaw(ctx, s, newArgs...)
+	if err != nil {
+		dao.rollback()
+		return 0, err
+	}
+	return ret, dao.commit()
+}
+
+func (dao *{{.GoName}}DAO) UpdateNoneZeroColByWhere(ctx context.Context, val *{{.PkgName}}{{.GoName}}, where string, args ...any) (int64, error) {
+	newArgs, colAfter := dao.quotedNoneZero(val)
+	newArgs = append(newArgs, args...)
+	s := "UPDATE {{.QuotedTableName}} SET " + colAfter + " WHERE " + where
+	ret, err := dao.UpdateColsByRaw(ctx, s, newArgs...)
+	if err != nil {
+		dao.rollback()
+		return 0, err
+	}
+	return ret, dao.commit()
+}
+
+func (dao *{{.GoName}}DAO) UpdateNonePKColByWhere(ctx context.Context, val *{{.PkgName}}{{.GoName}}, where string, args ...any) (int64, error) {
+	newArgs, colAfter := dao.quotedNonePK(val)
+	newArgs = append(newArgs, args...)
+	s := "UPDATE {{.QuotedTableName}} SET " + colAfter + " WHERE " + where
+	ret, err := dao.UpdateColsByRaw(ctx, s, newArgs...)
+	if err != nil {
+		dao.rollback()
+		return 0, err
+	}
+	return ret, dao.commit()
+}
+
+func (dao *{{.GoName}}DAO) quotedNoneZero(val *{{.PkgName}}{{.GoName}}) ([]interface{}, string) {
+	var cols = make([]string, 0, {{len .Fields}})
+	var args = make([]interface{}, 0, {{len .Fields}})
+{{- range .Fields}}
+	{{- if or .IsInteger .IsFloat}}
+	if val.{{.GoName}} != 0 {
+		args = append(args, val.{{.GoName}})
+		cols = append(cols, "`{{.ColName}}`")
+	}
+    {{- else if .IsString}}
+	if val.{{.GoName}} != "" {
+		args = append(args, val.{{.GoName}})
+		cols = append(cols, "`{{.ColName}}`")
+	}
+    {{- else if .IsBool}}
+	if val.{{.GoName}} != false {
+		args = append(args, val.{{.GoName}})
+		cols = append(cols, "`{{.ColName}}`")
+	}
+    {{- else if or .IsPtr .IsSlice}}
+	if val.{{.GoName}} != nil {
+		args = append(args, val.{{.GoName}})
+		cols = append(cols, "`{{.ColName}}`")
+	}
+	{{- else}}
+	log.Fatalf("列:%s的类型错误",{{.GoName}})
+	{{- end}}
+{{- end}}
+	if len(cols) == 1 {
+		cols[0] = cols[0] + "=?"
+	} else {
+		cols[len(cols)-1] = cols[len(cols)-1] + "=?"
+	}
+	return args, strings.Join(cols, "=?,")
+}
+
+func (dao *{{.GoName}}DAO) quotedNonePK(val *{{.PkgName}}{{.GoName}}) ([]interface{}, string) {
+	var cols = []string{
+{{- $control := false}}
+{{- range .Fields}}
+    {{- if not .IsPrimaryKey}}
+        {{- if $control}}{{print ", "}}{{- end}}
+		{{- print `"` "`" .ColName "`" `"`}}
+        {{- $control = true}}
+    {{- end}}
+{{- end}}}
+	var args = []interface{}{
+{{- $control = false}}
+{{- range .Fields}}
+    {{- if not .IsPrimaryKey}}
+        {{- if $control}}{{print ", "}}{{- end}}
+        {{- print "val." .GoName}}
+        {{- $control = true}}
+    {{- end}}
+{{- end}}}
+	if len(cols) == 1 {
+		cols[0] = cols[0] + "=?"
+	} else {
+		cols[len(cols)-1] = cols[len(cols)-1] + "=?"
+	}
+	return args, strings.Join(cols, "=?,")
+}
+
+func (dao *{{.GoName}}DAO) quotedSpecificCol(val *{{.PkgName}}{{.GoName}}, cols ...string) ([]interface{}, string) {
+	var relation = make(map[string]interface{}, {{len .Fields}})
+	var args = make([]interface{}, 0, {{len .Fields}})
+	{{- range $index,$value := .QuotedRelationship}}
+	relation["{{$index}}"] = val.{{$value}}
+	{{- end}}
+	for i := 0; i < len(cols); i++ {
+		args = append(args, relation[cols[i]])
+		cols[i] = "`" + cols[i] + "`"
+	}
+	if len(cols) == 1 {
+		cols[0] = cols[0] + "=?"
+	} else {
+		cols[len(cols)-1] = cols[len(cols)-1] + "=?"
+	}
+	return args, strings.Join(cols, "=?,")
+}
+
+func (dao *{{.GoName}}DAO) UpdateColsByRaw(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := dao.Tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+{{- end}}

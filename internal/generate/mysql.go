@@ -26,9 +26,18 @@ type MySQLGenerator struct{}
 //go:embed mysql_template
 var f embed.FS
 
-func (*MySQLGenerator) Generate(m model.Model, writer io.Writer) error {
+func (*MySQLGenerator) GenerateDB(m model.Model, writer io.Writer) error {
 	var err error
 	tMySQL, err := template.ParseFS(f, "mysql_template/*.gohtml")
+	if err != nil {
+		return err
+	}
+	return tMySQL.ExecuteTemplate(writer, "file.gohtml", &m)
+}
+
+func (*MySQLGenerator) GenerateTX(m model.Model, writer io.Writer) error {
+	var err error
+	tMySQL, err := template.ParseFS(f, "tx_template/*.gohtml")
 	if err != nil {
 		return err
 	}

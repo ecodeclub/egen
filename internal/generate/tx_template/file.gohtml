@@ -1,0 +1,31 @@
+package code
+
+import (
+	"context"
+	"database/sql"
+	"strings"
+	{{- if ne .ExtralImport ""}}
+	"{{.ExtralImport}}"
+	{{- end}}
+)
+
+type {{.GoName}}DAO struct {
+	Tx *sql.Tx
+}
+
+func (d *{{.GoName}}DAO) commit() error {
+	if err := d.Tx.Commit(); err != nil {
+		d.Tx.Rollback()
+		return err
+	}
+	return nil
+}
+
+func (d *{{.GoName}}DAO) rollback() error {
+	return d.Tx.Rollback()
+}
+
+{{template "insert" .}}
+{{template "select" .}}
+{{template "update" .}}
+{{template "delete" .}}
