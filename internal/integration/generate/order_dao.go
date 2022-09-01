@@ -27,6 +27,7 @@ type OrderDAO struct {
 	handlerTx
 }
 
+// 让用户将DB || Tx 传入
 func (dao *OrderDAO) initDatabase(operator interface{}) {
 	switch x := operator.(type) {
 	case handler:
