@@ -64,16 +64,16 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 			testdata: "./testdata/order.go",
 		},
 	}
-
+	
 	mg := &MySQLGenerator{}
-
+	
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			data, err := os.ReadFile(testCase.testdata)
 			assert.Equal(t, nil, err)
 			testCase.wantCode = string(data)
 			w := &bytes.Buffer{}
-			err = mg.Generate(*testCase.model, w)
+			err = mg.GenerateDB(*testCase.model, w)
 			assert.Equal(t, testCase.wantErr, err)
 			assert.Equal(t, testCase.wantCode, w.String())
 		})

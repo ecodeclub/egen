@@ -1,5 +1,3 @@
-//go:build e2e
-
 package codesecond
 
 import (
@@ -25,7 +23,7 @@ func connetDatabase(driver, config string) *sql.DB {
 	if err != nil {
 		log.Fatal("连接失败:", err)
 	}
-
+	
 	err = db.Ping()
 	for err != nil {
 		log.Println("等待数据库开启:", err)
@@ -55,19 +53,19 @@ func (d *SecondUserDAOTestSuite) TestUserDAO_Insert() {
 	}
 	ret, err := d.dao.Insert(d.ctx, users...)
 	t := d.T()
-
+	
 	assert.Equal(t, int64(2), ret)
 	assert.Equal(t, nil, err)
-
+	
 	user := integration.User{ID: 3, Username: "third", Password: "1234", Login: "8.23"}
 	ret, err = d.dao.Insert(d.ctx, &user)
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)
-
+	
 	ret, err = d.dao.Insert(d.ctx)
 	assert.Equal(t, int64(0), ret)
 	assert.Equal(t, nil, err)
-
+	
 	d.deleteAll()
 }
 
@@ -76,31 +74,31 @@ func (d *SecondUserDAOTestSuite) TestUserDAO_SelectByWhere() {
 	ret, err := d.dao.Insert(d.ctx, &integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"})
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)
-
+	
 	user, err := d.dao.SelectByWhere(d.ctx, "id=?", 1)
 	assert.Equal(t, integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"}, *user)
 	assert.Equal(t, nil, err)
-
+	
 	d.deleteAll()
 }
 
 func (d *SecondUserDAOTestSuite) TestUserDAO_SelectBatchByRaw() {
 	t := d.T()
-
+	
 	ret, err := d.dao.Insert(d.ctx, []*integration.User{
 		{1, "first", "123", "8.21"},
 		{2, "second", "123", "8.22"},
 	}...)
 	assert.Equal(t, int64(2), ret)
 	assert.Equal(t, nil, err)
-
+	
 	users, err := d.dao.SelectBatchByWhere(d.ctx, "password=?", "123")
 	assert.Equal(t, []*integration.User{
 		{1, "first", "123", "8.21"},
 		{2, "second", "123", "8.22"},
 	}, users)
 	assert.Equal(t, nil, err)
-
+	
 	d.deleteAll()
 }
 
@@ -110,60 +108,60 @@ func (d *SecondUserDAOTestSuite) TestUserDAO_UpdateNoneZeroColByWhere() {
 	ret, err := d.dao.Insert(d.ctx, &user)
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)
-
+	
 	ret, err = d.dao.UpdateNoneZeroColByWhere(d.ctx, &integration.User{Username: "second"}, "id=?", 1)
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)
-
+	
 	user.Username = "second"
-
+	
 	userPt, err := d.dao.SelectByWhere(d.ctx, "id=?", user.ID)
 	assert.Equal(t, user, *userPt)
 	assert.Equal(t, nil, err)
-
+	
 	d.deleteAll()
 }
 
 func (d *SecondUserDAOTestSuite) TestUserDAO_UpdateNonePKColByWhere() {
 	t := d.T()
-
+	
 	user := integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"}
 	ret, err := d.dao.Insert(d.ctx, &user)
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)
-
+	
 	user = integration.User{ID: 2, Username: "second", Password: "123", Login: "8.21"}
 	ret, err = d.dao.UpdateNonePKColByWhere(d.ctx, &user, "id=?", 1)
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)
-
+	
 	user.ID = 1
-
+	
 	userPt, err := d.dao.SelectByWhere(d.ctx, "id=?", 1)
 	assert.Equal(t, user, *userPt)
 	assert.Equal(t, nil, err)
-
+	
 	d.deleteAll()
 }
 
 func (d *SecondUserDAOTestSuite) TestUserDAO_UpdateSpecificColsByWhere() {
 	t := d.T()
-
+	
 	user := integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"}
 	ret, err := d.dao.Insert(d.ctx, &user)
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)
-
+	
 	ret, err = d.dao.UpdateSpecificColsByWhere(d.ctx, &integration.User{Username: "second"}, []string{"username"}, "id=?", 1)
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)
-
+	
 	user.Username = "second"
-
+	
 	userPt, err := d.dao.SelectByWhere(d.ctx, "id=?", user.ID)
 	assert.Equal(t, user, *userPt)
 	assert.Equal(t, nil, err)
-
+	
 	d.deleteAll()
 }
 
@@ -172,7 +170,7 @@ func (d *SecondUserDAOTestSuite) TestUserDAO_DeleteByWhere() {
 	ret, err := d.dao.Insert(d.ctx, &integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"})
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)
-
+	
 	ret, err = d.dao.DeleteByWhere(d.ctx, "id=?", 1)
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)

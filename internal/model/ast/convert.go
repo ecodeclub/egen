@@ -37,7 +37,7 @@ func ParseModel(contents File, options ...model.Option) []model.Model {
 func parseNode(typeNode TypeNode) model.Model {
 	fields := make([]model.Field, 0, len(typeNode.Fields))
 	tableName := Convert(typeNode.GoName)
-
+	
 	for _, v := range typeNode.Ans {
 		if v.Key == "TableName" {
 			tableName = v.Value
@@ -46,7 +46,7 @@ func parseNode(typeNode TypeNode) model.Model {
 	for _, v := range typeNode.Fields {
 		fields = append(fields, parseField(v))
 	}
-
+	
 	return model.Model{
 		GoName:    typeNode.GoName,
 		TableName: tableName,

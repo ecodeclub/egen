@@ -1,6 +1,6 @@
 //go:build e2e
 
-package generate
+package use_interface
 
 import (
 	"context"

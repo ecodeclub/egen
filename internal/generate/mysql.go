@@ -24,11 +24,14 @@ import (
 type MySQLGenerator struct{}
 
 //go:embed mysql_template
-var f embed.FS
+var fd embed.FS
+
+//go:embed tx_template
+var ft embed.FS
 
 func (*MySQLGenerator) GenerateDB(m model.Model, writer io.Writer) error {
 	var err error
-	tMySQL, err := template.ParseFS(f, "mysql_template/*.gohtml")
+	tMySQL, err := template.ParseFS(fd, "mysql_template/*.gohtml")
 	if err != nil {
 		return err
 	}
@@ -37,7 +40,7 @@ func (*MySQLGenerator) GenerateDB(m model.Model, writer io.Writer) error {
 
 func (*MySQLGenerator) GenerateTX(m model.Model, writer io.Writer) error {
 	var err error
-	tMySQL, err := template.ParseFS(f, "tx_template/*.gohtml")
+	tMySQL, err := template.ParseFS(ft, "tx_template/*.gohtml")
 	if err != nil {
 		return err
 	}

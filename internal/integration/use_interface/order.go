@@ -1,4 +1,4 @@
-package generate
+package use_interface
 
 //go:generate egen dao -src . -dst ./order_dao.go -type Order -import github.com/gotomicro/egen/internal/integration
 

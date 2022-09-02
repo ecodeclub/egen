@@ -14,15 +14,15 @@ type {{.GoName}}DAO struct {
 }
 
 func (dao *{{.GoName}}DAO) commit() error {
-	if err := d.Tx.Commit(); err != nil {
-		d.Tx.Rollback()
+	if err := dao.Tx.Commit(); err != nil {
+		dao.Tx.Rollback()
 		return err
 	}
 	return nil
 }
 
 func (dao *{{.GoName}}DAO) rollback() error {
-	return d.Tx.Rollback()
+	return dao.Tx.Rollback()
 }
 
 {{template "insert" .}}
