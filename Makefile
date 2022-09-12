@@ -14,3 +14,20 @@ e2e_up:
 
 e2e_down:
 	docker compose -f ./script/docker-compose.yml down
+
+.PHONY:	fmt
+fmt:
+	@sh ./script/goimports.sh
+
+.PHONY:	lint
+lint:
+	@golangci-lint run -c .golangci.yml
+
+.PHONY: tidy
+tidy:
+	@go mod tidy -v
+
+.PHONY: check
+check:
+	@$(MAKE) fmt
+	@$(MAKE) tidy

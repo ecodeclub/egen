@@ -16,9 +16,10 @@ package generate
 
 import (
 	"embed"
-	"github.com/gotomicro/egen/internal/model"
 	"io"
 	"text/template"
+
+	"github.com/gotomicro/egen/internal/model"
 )
 
 type MySQLGenerator struct{}

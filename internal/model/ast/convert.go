@@ -15,9 +15,10 @@
 package ast
 
 import (
-	"github.com/gotomicro/egen/internal/model"
 	"regexp"
 	"strings"
+
+	"github.com/gotomicro/egen/internal/model"
 )
 
 func ParseModel(contents File, options ...model.Option) []model.Model {

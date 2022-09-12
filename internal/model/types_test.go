@@ -15,9 +15,10 @@
 package model
 
 import (
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func InitModel() *Model {
