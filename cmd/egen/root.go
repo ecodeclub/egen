@@ -17,8 +17,9 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	daocmd "github.com/gotomicro/egen/cmd/egen/dao"
 	"os"
+
+	daocmd "github.com/gotomicro/egen/cmd/egen/dao"
 )
 
 var (

@@ -3,8 +3,9 @@ package codefirst
 import (
 	"context"
 	"database/sql"
-	"github.com/gotomicro/egen/internal/integration"
 	"strings"
+
+	"github.com/gotomicro/egen/internal/integration"
 )
 
 type UserDAO struct {

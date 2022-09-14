@@ -5,13 +5,14 @@ package codethird
 import (
 	"context"
 	"database/sql"
+	"log"
+	"testing"
+	"time"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gotomicro/egen/internal/integration"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"log"
-	"testing"
-	"time"
 )
 
 type ThirdUserDAOTestSuite struct {

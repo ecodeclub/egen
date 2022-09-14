@@ -17,13 +17,14 @@ package daocmd
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/gotomicro/egen/internal/generate"
 	"github.com/gotomicro/egen/internal/model"
 	"github.com/gotomicro/egen/internal/model/ast"
 	"github.com/gotomicro/egen/internal/utils"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 func execWrite(src, dst, name, path string) error {
@@ -31,13 +32,13 @@ func execWrite(src, dst, name, path string) error {
 		dstDir = utils.IsDir(dst)
 		srcDir = utils.IsDir(src)
 	)
-	
+
 	if !dstDir && name == allModel {
 		return errors.New("-dst 应该是一个目录，或者使用 -type 指定了单个类型")
 	} else if srcDir && !dstDir && name == allModel {
 		return errors.New("-src为目录的情况下-dst也应为目录 或者使用 -type指定了单个类型")
 	}
-	
+
 	srcFiles := make([]string, 0, 10)
 	if srcDir {
 		files, err := os.ReadDir(src)
@@ -60,12 +61,12 @@ func execWrite(src, dst, name, path string) error {
 		}
 		srcFiles = append(srcFiles, src)
 	}
-	
+
 	models := make([]model.Model, 0, len(srcFiles))
 	for _, name := range srcFiles {
 		models = append(models, ast.ParseModel(ast.LookUp(name, nil), model.WithImports(path))...)
 	}
-	
+
 	return WriteToFile(models, dst, name)
 }
 
@@ -75,7 +76,7 @@ func WriteToFile(models []model.Model, dst, name string) error {
 		if name != "" && v.GoName != name {
 			continue
 		}
-		
+
 		if utils.IsDir(dst) {
 			// 可能要对多个文件进行写入 写入完成后直接close
 			f, err := os.Create(dst + fmt.Sprintf("/%s_dao.go", ast.Convert(v.TableName)))
@@ -94,7 +95,7 @@ func WriteToFile(models []model.Model, dst, name string) error {
 			if err != nil {
 				return err
 			}
-			
+
 			if err = mg.Generate(v, f); err != nil {
 				return err
 			}

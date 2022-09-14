@@ -5,12 +5,13 @@ package generate
 import (
 	"context"
 	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 	"log"
 	"testing"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type OrderDAOTestSuite struct {

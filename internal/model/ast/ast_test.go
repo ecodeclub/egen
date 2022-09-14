@@ -15,8 +15,9 @@
 package ast
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFileVisitor_Get(t *testing.T) {

@@ -17,11 +17,12 @@ package daocmd
 import (
 	"flag"
 	"fmt"
-	"github.com/gotomicro/egen/internal/utils"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gotomicro/egen/internal/utils"
 )
 
 var (

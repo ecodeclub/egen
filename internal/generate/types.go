@@ -15,8 +15,9 @@
 package generate
 
 import (
-	"github.com/gotomicro/egen/internal/model"
 	"io"
+
+	"github.com/gotomicro/egen/internal/model"
 )
 
 // Generator 核心接口

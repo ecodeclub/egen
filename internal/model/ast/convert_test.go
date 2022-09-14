@@ -15,9 +15,10 @@
 package ast
 
 import (
+	"testing"
+
 	"github.com/gotomicro/egen/internal/model"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestParseModel(t *testing.T) {

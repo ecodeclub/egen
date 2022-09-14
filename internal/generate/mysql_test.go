@@ -16,10 +16,11 @@ package generate
 
 import (
 	"bytes"
-	"github.com/gotomicro/egen/internal/model"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/gotomicro/egen/internal/model"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMySQLGenerator_Generate(t *testing.T) {
