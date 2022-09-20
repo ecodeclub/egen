@@ -102,7 +102,7 @@ func (dao *{{.GoName}}DAO) quotedSpecificCol(val *{{.PkgName}}{{.GoName}}, cols 
 }
 
 func (dao *{{.GoName}}DAO) UpdateColsByRaw(ctx context.Context, query string, args ...any) (int64, error) {
-	res, err := dao.DB.ExecContext(ctx, query, args...)
+	res, err := dao.session.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}

@@ -1,6 +1,6 @@
 //go:build e2e
 
-package codethird
+package third
 
 import (
 	"context"
@@ -15,41 +15,42 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ThirdUserDAOTestSuite struct {
+type UserDAOTestSuite struct {
 	suite.Suite
 	ctx context.Context
-	dao UserDAO
+	dao *UserDAO
 }
 
-func connetDatabase(driver, config string) *sql.DB {
-	db, err := sql.Open(driver, config)
+func connectDatabase(driver, config string) *sql.DB {
+	common, err := sql.Open(driver, config)
 	if err != nil {
 		log.Fatal("连接失败:", err)
 	}
 
-	err = db.Ping()
+	err = common.Ping()
 	for err != nil {
 		log.Println("等待数据库开启:", err)
-		err = db.Ping()
+		err = common.Ping()
 		time.Sleep(1 * time.Second)
 	}
-	return db
+
+	return common
 }
 
-func (d *ThirdUserDAOTestSuite) deleteAll() (int64, error) {
+func (d *UserDAOTestSuite) deleteAll() (int64, error) {
 	return d.dao.DeleteByWhere(d.ctx, "1=1")
 }
 
-func (d *ThirdUserDAOTestSuite) SetupSuite() {
-	d.dao.DB = connetDatabase("mysql", "root:root@tcp(127.0.0.1:13306)/user_infor")
+func (d *UserDAOTestSuite) SetupSuite() {
 	d.ctx = context.Background()
+	d.dao, _ = NewUserDAO(connectDatabase("mysql", "root:root@tcp(127.0.0.1:13306)/user_infor"))
 }
 
-func (d *ThirdUserDAOTestSuite) TearDownSuite() {
-	d.dao.DB.Close()
+func (d *UserDAOTestSuite) TearDownSuite() {
+	d.dao.session.(*sql.DB).Close()
 }
 
-func (d *ThirdUserDAOTestSuite) TestUserDAO_Insert() {
+func (d *UserDAOTestSuite) TestUserDAO_Insert() {
 	users := []*integration.User{
 		{1, "first", "123", "8.21"},
 		{2, "second", "123", "8.22"},
@@ -72,7 +73,7 @@ func (d *ThirdUserDAOTestSuite) TestUserDAO_Insert() {
 	d.deleteAll()
 }
 
-func (d *ThirdUserDAOTestSuite) TestUserDAO_SelectByWhere() {
+func (d *UserDAOTestSuite) TestUserDAO_SelectByWhere() {
 	t := d.T()
 	ret, err := d.dao.Insert(d.ctx, &integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"})
 	assert.Equal(t, int64(1), ret)
@@ -85,7 +86,7 @@ func (d *ThirdUserDAOTestSuite) TestUserDAO_SelectByWhere() {
 	d.deleteAll()
 }
 
-func (d *ThirdUserDAOTestSuite) TestUserDAO_SelectBatchByRaw() {
+func (d *UserDAOTestSuite) TestUserDAO_SelectBatchByRaw() {
 	t := d.T()
 
 	ret, err := d.dao.Insert(d.ctx, []*integration.User{
@@ -105,7 +106,7 @@ func (d *ThirdUserDAOTestSuite) TestUserDAO_SelectBatchByRaw() {
 	d.deleteAll()
 }
 
-func (d *ThirdUserDAOTestSuite) TestUserDAO_UpdateNoneZeroColByWhere() {
+func (d *UserDAOTestSuite) TestUserDAO_UpdateNoneZeroColByWhere() {
 	t := d.T()
 	user := integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"}
 	ret, err := d.dao.Insert(d.ctx, &user)
@@ -125,7 +126,7 @@ func (d *ThirdUserDAOTestSuite) TestUserDAO_UpdateNoneZeroColByWhere() {
 	d.deleteAll()
 }
 
-func (d *ThirdUserDAOTestSuite) TestUserDAO_UpdateNonePKColByWhere() {
+func (d *UserDAOTestSuite) TestUserDAO_UpdateNonePKColByWhere() {
 	t := d.T()
 
 	user := integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"}
@@ -147,7 +148,7 @@ func (d *ThirdUserDAOTestSuite) TestUserDAO_UpdateNonePKColByWhere() {
 	d.deleteAll()
 }
 
-func (d *ThirdUserDAOTestSuite) TestUserDAO_UpdateSpecificColsByWhere() {
+func (d *UserDAOTestSuite) TestUserDAO_UpdateSpecificColsByWhere() {
 	t := d.T()
 
 	user := integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"}
@@ -168,7 +169,7 @@ func (d *ThirdUserDAOTestSuite) TestUserDAO_UpdateSpecificColsByWhere() {
 	d.deleteAll()
 }
 
-func (d *ThirdUserDAOTestSuite) TestUserDAO_DeleteByWhere() {
+func (d *UserDAOTestSuite) TestUserDAO_DeleteByWhere() {
 	t := d.T()
 	ret, err := d.dao.Insert(d.ctx, &integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"})
 	assert.Equal(t, int64(1), ret)
@@ -180,5 +181,5 @@ func (d *ThirdUserDAOTestSuite) TestUserDAO_DeleteByWhere() {
 }
 
 func Test_All(t *testing.T) {
-	suite.Run(t, new(ThirdUserDAOTestSuite))
+	suite.Run(t, new(UserDAOTestSuite))
 }

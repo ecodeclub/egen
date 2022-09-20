@@ -5,7 +5,7 @@ func (dao *{{.GoName}}DAO) DeleteByWhere(ctx context.Context, where string, args
 }
 
 func (dao *{{.GoName}}DAO) DeleteByRaw(ctx context.Context, query string, args ...any) (int64, error) {
-	res, err := dao.DB.ExecContext(ctx, query, args...)
+	res, err := dao.session.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}

@@ -25,11 +25,11 @@ import (
 type MySQLGenerator struct{}
 
 //go:embed mysql_template
-var f embed.FS
+var mt embed.FS
 
 func (*MySQLGenerator) Generate(m model.Model, writer io.Writer) error {
 	var err error
-	tMySQL, err := template.ParseFS(f, "mysql_template/*.gohtml")
+	tMySQL, err := template.ParseFS(mt, "mysql_template/*.gohtml")
 	if err != nil {
 		return err
 	}

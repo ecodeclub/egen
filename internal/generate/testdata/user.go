@@ -3,11 +3,54 @@ package code
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
 )
 
 type UserDAO struct {
-	DB *sql.DB
+	session interface {
+		QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+		QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+		ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	}
+}
+
+type UserTxDAO struct {
+	*UserDAO
+}
+
+func (dao *UserTxDAO) Rollback() error {
+	tx, ok := dao.session.(*sql.Tx)
+	if !ok {
+		return errors.New("非事务")
+	}
+	return tx.Rollback()
+}
+
+func (dao *UserTxDAO) Commit() error {
+	tx, ok := dao.session.(*sql.Tx)
+	if !ok {
+		return errors.New("非事务")
+	}
+	return tx.Commit()
+}
+
+func (dao *UserDAO) Begin(ctx context.Context, opts *sql.TxOptions) (*UserTxDAO, error) {
+	db, ok := dao.session.(*sql.DB)
+	if !ok {
+		return nil, errors.New("不能在事务中开启事务")
+	}
+	tx, err := db.BeginTx(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &UserTxDAO{
+		UserDAO: &UserDAO{tx},
+	}, nil
+}
+
+func NewUserDAO(db *sql.DB) (*UserDAO, error) {
+	return &UserDAO{db}, nil
 }
 
 func (dao *UserDAO) Insert(ctx context.Context, vals ...*User) (int64, error) {
@@ -24,7 +67,7 @@ func (dao *UserDAO) Insert(ctx context.Context, vals ...*User) (int64, error) {
 		args = append(args, v.LoginTime, v.FirstName, v.LastName, v.UserId, v.Password)
 	}
 	sqlSen := "INSERT INTO `user`(`login_time`,`first_name`,`last_name`,`user_id`,`password`) VALUES" + str
-	res, err := dao.DB.ExecContext(ctx, sqlSen, args...)
+	res, err := dao.session.ExecContext(ctx, sqlSen, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -41,7 +84,7 @@ func (dao *UserDAO) NewOne(row *sql.Row) (*User, error) {
 }
 
 func (dao *UserDAO) SelectByRaw(ctx context.Context, query string, args ...any) (*User, error) {
-	row := dao.DB.QueryRowContext(ctx, query, args...)
+	row := dao.session.QueryRowContext(ctx, query, args...)
 	return dao.NewOne(row)
 }
 
@@ -66,7 +109,7 @@ func (dao *UserDAO) NewBatch(rows *sql.Rows) ([]*User, error) {
 }
 
 func (dao *UserDAO) SelectBatchByRaw(ctx context.Context, query string, args ...any) ([]*User, error) {
-	rows, err := dao.DB.QueryContext(ctx, query, args...)
+	rows, err := dao.session.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +205,7 @@ func (dao *UserDAO) quotedSpecificCol(val *User, cols ...string) ([]interface{},
 }
 
 func (dao *UserDAO) UpdateColsByRaw(ctx context.Context, query string, args ...any) (int64, error) {
-	res, err := dao.DB.ExecContext(ctx, query, args...)
+	res, err := dao.session.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -175,7 +218,7 @@ func (dao *UserDAO) DeleteByWhere(ctx context.Context, where string, args ...any
 }
 
 func (dao *UserDAO) DeleteByRaw(ctx context.Context, query string, args ...any) (int64, error) {
-	res, err := dao.DB.ExecContext(ctx, query, args...)
+	res, err := dao.session.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
