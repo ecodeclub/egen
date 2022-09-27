@@ -41,9 +41,10 @@ var (
 )
 
 const (
-	allModel   = ""
-	defaultDst = "./dao"
-	defaultSrc = "."
+	allModel    = ""
+	defaultDst  = "./dao"
+	defaultSrc  = "."
+	defaultPath = ""
 )
 
 func ExecDao(args []string) {
@@ -84,7 +85,7 @@ func initDaoFlagSet() *flag.FlagSet {
 	daoFlagSet.StringVar(&dst, "dst", defaultDst, "生成的代码写入的文件或目录")
 	daoFlagSet.StringVar(&src, "src", defaultSrc, "读取结构体的文件或目录")
 	daoFlagSet.StringVar(&dataModel, "type", allModel, "结构体名称")
-	daoFlagSet.StringVar(&path, "import", "", "import时的路径")
+	daoFlagSet.StringVar(&path, "import", defaultPath, "import时的路径")
 
 	return daoFlagSet
 }

@@ -30,4 +30,3 @@ tidy:
 .PHONY: check
 check:
 	@$(MAKE) fmt
-	@$(MAKE) tidy

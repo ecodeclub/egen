@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type OrderDAO struct {
+type OrderGenDAO struct {
 	session interface {
 		QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 		QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
@@ -15,11 +15,11 @@ type OrderDAO struct {
 	}
 }
 
-type OrderTxDAO struct {
-	*OrderDAO
+type OrderTxGenDAO struct {
+	*OrderGenDAO
 }
 
-func (dao *OrderTxDAO) Rollback() error {
+func (dao *OrderTxGenDAO) Rollback() error {
 	tx, ok := dao.session.(*sql.Tx)
 	if !ok {
 		return errors.New("非事务")
@@ -27,7 +27,7 @@ func (dao *OrderTxDAO) Rollback() error {
 	return tx.Rollback()
 }
 
-func (dao *OrderTxDAO) Commit() error {
+func (dao *OrderTxGenDAO) Commit() error {
 	tx, ok := dao.session.(*sql.Tx)
 	if !ok {
 		return errors.New("非事务")
@@ -35,7 +35,7 @@ func (dao *OrderTxDAO) Commit() error {
 	return tx.Commit()
 }
 
-func (dao *OrderDAO) Begin(ctx context.Context, opts *sql.TxOptions) (*OrderTxDAO, error) {
+func (dao *OrderGenDAO) Begin(ctx context.Context, opts *sql.TxOptions) (*OrderTxGenDAO, error) {
 	db, ok := dao.session.(*sql.DB)
 	if !ok {
 		return nil, errors.New("不能在事务中开启事务")
@@ -44,16 +44,16 @@ func (dao *OrderDAO) Begin(ctx context.Context, opts *sql.TxOptions) (*OrderTxDA
 	if err != nil {
 		return nil, err
 	}
-	return &OrderTxDAO{
-		OrderDAO: &OrderDAO{tx},
+	return &OrderTxGenDAO{
+		OrderGenDAO: &OrderGenDAO{tx},
 	}, nil
 }
 
-func NewOrderDAO(db *sql.DB) (*OrderDAO, error) {
-	return &OrderDAO{db}, nil
+func NewOrderGenDAO(db *sql.DB) (*OrderGenDAO, error) {
+	return &OrderGenDAO{db}, nil
 }
 
-func (dao *OrderDAO) Insert(ctx context.Context, vals ...*Order) (int64, error) {
+func (dao *OrderGenDAO) Insert(ctx context.Context, vals ...*Order) (int64, error) {
 	if len(vals) == 0 || vals == nil {
 		return 0, nil
 	}
@@ -74,7 +74,7 @@ func (dao *OrderDAO) Insert(ctx context.Context, vals ...*Order) (int64, error) 
 	return res.RowsAffected()
 }
 
-func (dao *OrderDAO) NewOne(row *sql.Row) (*Order, error) {
+func (dao *OrderGenDAO) NewOne(row *sql.Row) (*Order, error) {
 	if err := row.Err(); err != nil {
 		return nil, err
 	}
@@ -83,17 +83,17 @@ func (dao *OrderDAO) NewOne(row *sql.Row) (*Order, error) {
 	return &val, err
 }
 
-func (dao *OrderDAO) SelectByRaw(ctx context.Context, query string, args ...any) (*Order, error) {
+func (dao *OrderGenDAO) SelectByRaw(ctx context.Context, query string, args ...any) (*Order, error) {
 	row := dao.session.QueryRowContext(ctx, query, args...)
 	return dao.NewOne(row)
 }
 
-func (dao *OrderDAO) SelectByWhere(ctx context.Context, where string, args ...any) (*Order, error) {
+func (dao *OrderGenDAO) SelectByWhere(ctx context.Context, where string, args ...any) (*Order, error) {
 	s := "SELECT `order_time`,`order_id`,`user_id`,`has_buy`,`price`,`seller` FROM `order` WHERE " + where
 	return dao.SelectByRaw(ctx, s, args...)
 }
 
-func (dao *OrderDAO) NewBatch(rows *sql.Rows) ([]*Order, error) {
+func (dao *OrderGenDAO) NewBatch(rows *sql.Rows) ([]*Order, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (dao *OrderDAO) NewBatch(rows *sql.Rows) ([]*Order, error) {
 	return vals, nil
 }
 
-func (dao *OrderDAO) SelectBatchByRaw(ctx context.Context, query string, args ...any) ([]*Order, error) {
+func (dao *OrderGenDAO) SelectBatchByRaw(ctx context.Context, query string, args ...any) ([]*Order, error) {
 	rows, err := dao.session.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -116,33 +116,33 @@ func (dao *OrderDAO) SelectBatchByRaw(ctx context.Context, query string, args ..
 	return dao.NewBatch(rows)
 }
 
-func (dao *OrderDAO) SelectBatchByWhere(ctx context.Context, where string, args ...any) ([]*Order, error) {
+func (dao *OrderGenDAO) SelectBatchByWhere(ctx context.Context, where string, args ...any) ([]*Order, error) {
 	s := "SELECT `order_time`,`order_id`,`user_id`,`has_buy`,`price`,`seller` FROM `order` WHERE " + where
 	return dao.SelectBatchByRaw(ctx, s, args...)
 }
 
-func (dao *OrderDAO) UpdateSpecificColsByWhere(ctx context.Context, val *Order, cols []string, where string, args ...any) (int64, error) {
+func (dao *OrderGenDAO) UpdateSpecificColsByWhere(ctx context.Context, val *Order, cols []string, where string, args ...any) (int64, error) {
 	newArgs, colAfter := dao.quotedSpecificCol(val, cols...)
 	newArgs = append(newArgs, args...)
 	s := "UPDATE `order` SET " + colAfter + " WHERE " + where
 	return dao.UpdateColsByRaw(ctx, s, newArgs...)
 }
 
-func (dao *OrderDAO) UpdateNoneZeroColByWhere(ctx context.Context, val *Order, where string, args ...any) (int64, error) {
+func (dao *OrderGenDAO) UpdateNoneZeroColByWhere(ctx context.Context, val *Order, where string, args ...any) (int64, error) {
 	newArgs, colAfter := dao.quotedNoneZero(val)
 	newArgs = append(newArgs, args...)
 	s := "UPDATE `order` SET " + colAfter + " WHERE " + where
 	return dao.UpdateColsByRaw(ctx, s, newArgs...)
 }
 
-func (dao *OrderDAO) UpdateNonePKColByWhere(ctx context.Context, val *Order, where string, args ...any) (int64, error) {
+func (dao *OrderGenDAO) UpdateNonePKColByWhere(ctx context.Context, val *Order, where string, args ...any) (int64, error) {
 	newArgs, colAfter := dao.quotedNonePK(val)
 	newArgs = append(newArgs, args...)
 	s := "UPDATE `order` SET " + colAfter + " WHERE " + where
 	return dao.UpdateColsByRaw(ctx, s, newArgs...)
 }
 
-func (dao *OrderDAO) quotedNoneZero(val *Order) ([]interface{}, string) {
+func (dao *OrderGenDAO) quotedNoneZero(val *Order) ([]interface{}, string) {
 	var cols = make([]string, 0, 6)
 	var args = make([]interface{}, 0, 6)
 	if val.OrderTime != "" {
@@ -157,7 +157,7 @@ func (dao *OrderDAO) quotedNoneZero(val *Order) ([]interface{}, string) {
 		args = append(args, val.UserId)
 		cols = append(cols, "`user_id`")
 	}
-	if val.HasBuy != false {
+	if val.HasBuy {
 		args = append(args, val.HasBuy)
 		cols = append(cols, "`has_buy`")
 	}
@@ -177,7 +177,7 @@ func (dao *OrderDAO) quotedNoneZero(val *Order) ([]interface{}, string) {
 	return args, strings.Join(cols, "=?,")
 }
 
-func (dao *OrderDAO) quotedNonePK(val *Order) ([]interface{}, string) {
+func (dao *OrderGenDAO) quotedNonePK(val *Order) ([]interface{}, string) {
 	var cols = []string{"`order_time`", "`order_id`", "`has_buy`", "`price`", "`seller`"}
 	var args = []interface{}{val.OrderTime, val.OrderId, val.HasBuy, val.Price, val.Seller}
 	if len(cols) == 1 {
@@ -188,7 +188,7 @@ func (dao *OrderDAO) quotedNonePK(val *Order) ([]interface{}, string) {
 	return args, strings.Join(cols, "=?,")
 }
 
-func (dao *OrderDAO) quotedSpecificCol(val *Order, cols ...string) ([]interface{}, string) {
+func (dao *OrderGenDAO) quotedSpecificCol(val *Order, cols ...string) ([]interface{}, string) {
 	var relation = make(map[string]interface{}, 6)
 	var args = make([]interface{}, 0, 6)
 	relation["has_buy"] = val.HasBuy
@@ -209,7 +209,7 @@ func (dao *OrderDAO) quotedSpecificCol(val *Order, cols ...string) ([]interface{
 	return args, strings.Join(cols, "=?,")
 }
 
-func (dao *OrderDAO) UpdateColsByRaw(ctx context.Context, query string, args ...any) (int64, error) {
+func (dao *OrderGenDAO) UpdateColsByRaw(ctx context.Context, query string, args ...any) (int64, error) {
 	res, err := dao.session.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
@@ -217,12 +217,12 @@ func (dao *OrderDAO) UpdateColsByRaw(ctx context.Context, query string, args ...
 	return res.RowsAffected()
 }
 
-func (dao *OrderDAO) DeleteByWhere(ctx context.Context, where string, args ...any) (int64, error) {
+func (dao *OrderGenDAO) DeleteByWhere(ctx context.Context, where string, args ...any) (int64, error) {
 	s := "DELETE FROM `order` WHERE " + where
 	return dao.DeleteByRaw(ctx, s, args...)
 }
 
-func (dao *OrderDAO) DeleteByRaw(ctx context.Context, query string, args ...any) (int64, error) {
+func (dao *OrderGenDAO) DeleteByRaw(ctx context.Context, query string, args ...any) (int64, error) {
 	res, err := dao.session.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err

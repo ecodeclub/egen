@@ -21,6 +21,8 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+
+	"github.com/gotomicro/egen/internal/model"
 )
 
 type fileVisitor struct {
@@ -30,15 +32,24 @@ type fileVisitor struct {
 }
 
 type typeVisitor struct {
-	ans    Annotations
-	fields []Field
-	GoName string
+	ans     Annotations
+	fields  []Field
+	methods []Method
+	GoName  string
 }
 
 type TypeNode struct {
 	Annotations
-	Fields []Field
-	GoName string
+	Fields  []Field
+	GoName  string
+	Methods []Method
+}
+
+type Method struct {
+	FuncName string
+	Results  []string
+	Params   []model.Parameter
+	Annotations
 }
 
 type Field struct {
@@ -76,9 +87,10 @@ func (f *fileVisitor) Visit(node ast.Node) ast.Visitor {
 			tp, ok := node.Specs[0].(*ast.TypeSpec)
 			if ok {
 				res := &typeVisitor{
-					GoName: tp.Name.Name,
-					ans:    newAnnotations(node.Doc),
-					fields: make([]Field, 0),
+					GoName:  tp.Name.Name,
+					ans:     newAnnotations(node.Doc),
+					fields:  make([]Field, 0),
+					methods: make([]Method, 0),
 				}
 				f.types = append(f.types, res)
 				return res
@@ -93,17 +105,26 @@ func (t *typeVisitor) Get() TypeNode {
 		Annotations: t.ans,
 		Fields:      t.fields,
 		GoName:      t.GoName,
+		Methods:     t.methods,
 	}
 }
 
 func (t *typeVisitor) Visit(node ast.Node) (w ast.Visitor) {
-	fd, ok := node.(*ast.Field)
-	if ok {
-		t.fields = append(t.fields, Field{
-			Annotations: newAnnotations(fd.Doc),
-			GoName:      fd.Names[0].Name,
-			GoType:      fmt.Sprintf("%v", fd.Type),
-		})
+	if x, ok := node.(*ast.Field); ok {
+		if ft, ok := x.Type.(*ast.FuncType); ok {
+			t.methods = append(t.methods, Method{
+				FuncName:    x.Names[0].String(),
+				Params:      getParam(ft),
+				Results:     getResult(ft),
+				Annotations: newAnnotations(x.Doc),
+			})
+		} else {
+			t.fields = append(t.fields, Field{
+				Annotations: newAnnotations(x.Doc),
+				GoName:      x.Names[0].Name,
+				GoType:      fmt.Sprintf("%v", x.Type),
+			})
+		}
 		return nil
 	}
 	return t

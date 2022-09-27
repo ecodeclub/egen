@@ -1,26 +1,26 @@
 {{- define "update"}}
-func (dao *{{.GoName}}DAO) UpdateSpecificColsByWhere(ctx context.Context, val *{{.PkgName}}{{.GoName}}, cols []string, where string, args ...any) (int64, error) {
+func (dao *{{.GoName}}GenDAO) UpdateSpecificColsByWhere(ctx context.Context, val *{{.PkgName}}{{.GoName}}, cols []string, where string, args ...any) (int64, error) {
 	newArgs, colAfter := dao.quotedSpecificCol(val, cols...)
 	newArgs = append(newArgs, args...)
 	s := "UPDATE {{.QuotedTableName}} SET " + colAfter + " WHERE " + where
 	return dao.UpdateColsByRaw(ctx, s, newArgs...)
 }
 
-func (dao *{{.GoName}}DAO) UpdateNoneZeroColByWhere(ctx context.Context, val *{{.PkgName}}{{.GoName}}, where string, args ...any) (int64, error) {
+func (dao *{{.GoName}}GenDAO) UpdateNoneZeroColByWhere(ctx context.Context, val *{{.PkgName}}{{.GoName}}, where string, args ...any) (int64, error) {
 	newArgs, colAfter := dao.quotedNoneZero(val)
 	newArgs = append(newArgs, args...)
 	s := "UPDATE {{.QuotedTableName}} SET " + colAfter + " WHERE " + where
 	return dao.UpdateColsByRaw(ctx, s, newArgs...)
 }
 
-func (dao *{{.GoName}}DAO) UpdateNonePKColByWhere(ctx context.Context, val *{{.PkgName}}{{.GoName}}, where string, args ...any) (int64, error) {
+func (dao *{{.GoName}}GenDAO) UpdateNonePKColByWhere(ctx context.Context, val *{{.PkgName}}{{.GoName}}, where string, args ...any) (int64, error) {
 	newArgs, colAfter := dao.quotedNonePK(val)
 	newArgs = append(newArgs, args...)
 	s := "UPDATE {{.QuotedTableName}} SET " + colAfter + " WHERE " + where
 	return dao.UpdateColsByRaw(ctx, s, newArgs...)
 }
 
-func (dao *{{.GoName}}DAO) quotedNoneZero(val *{{.PkgName}}{{.GoName}}) ([]interface{}, string) {
+func (dao *{{.GoName}}GenDAO) quotedNoneZero(val *{{.PkgName}}{{.GoName}}) ([]interface{}, string) {
 	var cols = make([]string, 0, {{len .Fields}})
 	var args = make([]interface{}, 0, {{len .Fields}})
 {{- range .Fields}}
@@ -35,7 +35,7 @@ func (dao *{{.GoName}}DAO) quotedNoneZero(val *{{.PkgName}}{{.GoName}}) ([]inter
 		cols = append(cols, "`{{.ColName}}`")
 	}
     {{- else if .IsBool}}
-	if val.{{.GoName}} != false {
+	if val.{{.GoName}} {
 		args = append(args, val.{{.GoName}})
 		cols = append(cols, "`{{.ColName}}`")
 	}
@@ -56,7 +56,7 @@ func (dao *{{.GoName}}DAO) quotedNoneZero(val *{{.PkgName}}{{.GoName}}) ([]inter
 	return args, strings.Join(cols, "=?,")
 }
 
-func (dao *{{.GoName}}DAO) quotedNonePK(val *{{.PkgName}}{{.GoName}}) ([]interface{}, string) {
+func (dao *{{.GoName}}GenDAO) quotedNonePK(val *{{.PkgName}}{{.GoName}}) ([]interface{}, string) {
 	var cols = []string{
 {{- $control := false}}
 {{- range .Fields}}
@@ -83,7 +83,7 @@ func (dao *{{.GoName}}DAO) quotedNonePK(val *{{.PkgName}}{{.GoName}}) ([]interfa
 	return args, strings.Join(cols, "=?,")
 }
 
-func (dao *{{.GoName}}DAO) quotedSpecificCol(val *{{.PkgName}}{{.GoName}}, cols ...string) ([]interface{}, string) {
+func (dao *{{.GoName}}GenDAO) quotedSpecificCol(val *{{.PkgName}}{{.GoName}}, cols ...string) ([]interface{}, string) {
 	var relation = make(map[string]interface{}, {{len .Fields}})
 	var args = make([]interface{}, 0, {{len .Fields}})
 	{{- range $index,$value := .QuotedRelationship}}
@@ -101,7 +101,7 @@ func (dao *{{.GoName}}DAO) quotedSpecificCol(val *{{.PkgName}}{{.GoName}}, cols 
 	return args, strings.Join(cols, "=?,")
 }
 
-func (dao *{{.GoName}}DAO) UpdateColsByRaw(ctx context.Context, query string, args ...any) (int64, error) {
+func (dao *{{.GoName}}GenDAO) UpdateColsByRaw(ctx context.Context, query string, args ...any) (int64, error) {
 	res, err := dao.session.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err

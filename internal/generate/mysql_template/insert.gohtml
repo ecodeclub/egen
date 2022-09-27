@@ -1,5 +1,5 @@
 {{- define "insert"}}
-func (dao *{{.GoName}}DAO) Insert(ctx context.Context, vals ...*{{.PkgName}}{{.GoName}}) (int64, error) {
+func (dao *{{.GoName}}GenDAO) Insert(ctx context.Context, vals ...*{{.PkgName}}{{.GoName}}) (int64, error) {
 	if len(vals) == 0 || vals == nil {
 		return 0, nil
 	}

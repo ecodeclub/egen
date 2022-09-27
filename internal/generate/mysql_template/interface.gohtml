@@ -1,0 +1,87 @@
+{{- define "interface"}}
+    {{- $model := .}}
+    {{- range $index, $content := .Methods}}
+        {{- if ne $index 0}}
+            {{- print "\n"}}
+        {{- end}}
+func (dao *{{- $model.GoName}}GenDAO) {{.QuotedFunc}} {
+	var params = make([]any, 0)
+	Sql := "{{- $model.QuotedColOfSql $content}}"
+		{{- $controlState := true}}
+        {{- range $k, $t := .Params}}
+			{{- if $t.Exist}}
+				{{- if $t.HasLen}}
+                    {{- if $controlState}}
+	replaceParams := ""
+                        {{- $controlState = false}}
+                    {{- end}}
+	for i := 0; i < len({{- $t.GoName}}); i++ {
+		if i != 0 {
+			replaceParams += ","
+		}
+		replaceParams += "?"
+	}
+	Sql = strings.Replace(Sql, "#{{- $t.GoName}}", "("+replaceParams+")", 1)
+	for _, v := range {{$t.GoName}} {
+		params = append(params, v)
+	}
+				{{- else}}
+	Sql = strings.Replace(Sql, "#{{- $t.GoName}}", "?", 1)
+	params = append(params, {{$t.GoName}})
+				{{- end}}
+		{{- end}}
+	{{- end}}
+        {{- if eq .SqlType "update"}}
+	ret, err := dao.UpdateColsByRaw({{- (index .Params 0).GoName}}, Sql, params...)
+        {{- else if eq .SqlType "delete"}}
+	ret, err := dao.DeleteByRaw({{- (index .Params 0).GoName}}, Sql, params...)
+        {{- else if eq .SqlType "select"}}
+		{{- block "interfaceSelect" $model.WrapData .}}{{- end}}
+		{{- end}}
+	return ret, err
+}
+    {{- end}}
+{{- end}}
+
+
+{{- define "interfaceSelect" }}
+    {{- $method := index . "method"}}
+    {{- $model := index . "model"}}
+    {{- $result := print $model.PkgName $model.GoName}}
+    {{- if eq (index $method.Results 0) (print "[]*" $result)}}
+        {{- $cols := $model.QuotedGoNameOfSqlParam ($model.QuotedColOfSql $method)}}
+	ret := make([]*{{- $result}}, 0, 20)
+	rows, err := dao.session.QueryContext({{- (index $method.Params 0).GoName}}, Sql, params...)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var one {{$result}}
+		if err = rows.Scan({{- range $k, $v := $cols}}
+            {{- if ne $k 0}}, {{end}}{{$v}}
+        {{- end}}); err != nil {
+			return nil, err
+		}
+		ret = append(ret, &one)
+	}
+    {{- else if eq (index $method.Results 0) (print "*" $result)}}
+	ret, err := dao.SelectByRaw({{- (index $method.Params 0).GoName}}, Sql, params...)
+    {{- else if $method.IsSlice (index $method.Results 0)}}
+	ret := make({{- index $method.Results 0}}, 0, 10)
+	rows, err := dao.session.QueryContext({{- (index $method.Params 0).GoName}}, Sql, params...)
+	if err != nil {
+		return ret, err
+	}
+	for rows.Next() {
+		var one {{slice (index $method.Results 0) 2}}
+		if err = rows.Scan(&one); err != nil {
+			return ret, err
+		}
+		ret = append(ret, one)
+	}
+	{{- else}}
+	var ret {{index $method.Results 0}}
+	row := dao.session.QueryRowContext({{- (index $method.Params 0).GoName}}, Sql, params...)
+	err := row.Scan(&ret)
+    {{- end}}
+{{- end}}

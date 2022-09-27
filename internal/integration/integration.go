@@ -14,14 +14,16 @@
 
 package integration
 
+/*
 //go:generate egen dao -type User -import "github.com/gotomicro/egen/internal/integration"
 //go:generate egen dao -src . -import "github.com/gotomicro/egen/internal/integration"
 //go:generate egen dao -src ./integration.go -import "github.com/gotomicro/egen/internal/integration"
-//go:generate egen dao -src ./integration.go -type User -import "github.com/gotomicro/egen/internal/integration"
+*/
+//go:generate egen dao -src ./integration.go -dst ./test_egen_param/test_tx/user_dao_tx.go -type User -import "github.com/gotomicro/egen/internal/integration"
 
-//go:generate egen dao -dst ./dao/first -type User -import "github.com/gotomicro/egen/internal/integration"
-//go:generate egen dao -src . -dst ./dao/second -import "github.com/gotomicro/egen/internal/integration"
-//go:generate egen dao -src . -dst ./dao/third -type User -import "github.com/gotomicro/egen/internal/integration"
+//go:generate egen dao -dst ./test_egen_param/first -type User -import "github.com/gotomicro/egen/internal/integration"
+//go:generate egen dao -src . -dst ./test_egen_param/second -import "github.com/gotomicro/egen/internal/integration"
+//go:generate egen_param dao -src . -dst ./test_egen_param/third -type User -import "github.com/gotomicro/egen/internal/integration"
 type User struct {
 	// @PrimaryKey true
 	// @ColName id
