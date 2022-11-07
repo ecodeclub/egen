@@ -4,6 +4,7 @@
   "ignore": [
     "internal/generate/testdata",
     "internal/integration/dao",
-    "internal/integration/generate"
+    "internal/integration/test_custom_sql",
+    "internal/integration/test_egen_param"
   ]
 }

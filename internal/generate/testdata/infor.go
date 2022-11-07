@@ -16,3 +16,8 @@ type Order struct {
 	UserId    uint32
 	Seller    *int
 }
+
+type OrderDAO interface {
+	// @select select * from order where name in #name and status=#status
+	Hello(name [5]string, status int) (int64, error)
+}

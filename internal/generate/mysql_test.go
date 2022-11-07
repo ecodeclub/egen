@@ -34,8 +34,9 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 		{
 			name: "user",
 			model: &model.Model{
-				TableName: "user",
-				GoName:    "User",
+				TableName:   "user",
+				GoName:      "User",
+				SelfPkgName: "code",
 				Fields: []model.Field{
 					{ColName: "login_time", GoName: "LoginTime", GoType: "string"},
 					{ColName: "first_name", GoName: "FirstName", GoType: "string"},
@@ -50,8 +51,10 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 		{
 			name: "order",
 			model: &model.Model{
-				TableName: "order",
-				GoName:    "Order",
+				TableName:   "order",
+				GoName:      "Order",
+				PkgName:     "",
+				SelfPkgName: "code",
 				Fields: []model.Field{
 					{ColName: "order_time", GoName: "OrderTime", GoType: "string"},
 					{ColName: "order_id", GoName: "OrderId", GoType: "uint32"},
@@ -59,6 +62,19 @@ func TestMySQLGenerator_Generate(t *testing.T) {
 					{ColName: "has_buy", GoName: "HasBuy", GoType: "bool"},
 					{ColName: "price", GoName: "Price", GoType: "float64"},
 					{ColName: "seller", GoName: "Seller", GoType: "*int"},
+				},
+				Methods: []model.Method{
+					{
+						FuncName:    "Hello",
+						SqlType:     "select",
+						SqlSentence: "select * from order where name in #name and status=#status",
+						Params: []model.Parameter{
+							{GoName: "ctx", GoType: "context.Context", Exist: false, HasLen: false},
+							{GoName: "name", GoType: "[5]string", Exist: true, HasLen: true},
+							{GoName: "status", GoType: "int", Exist: true, HasLen: false},
+						},
+						Results: []string{"[]*Order", "error"},
+					},
 				},
 			},
 			wantErr:  nil,

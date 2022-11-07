@@ -30,6 +30,15 @@ CREATE TABLE `user_infor`.`user_third`(
     `username` VARCHAR(20)
 );
 
+CREATE TABLE `user_infor`.`user_dao`(
+    `id` INT  AUTO_INCREMENT PRIMARY KEY,
+    `password` VARCHAR(15),
+    `login` VARCHAR(25),
+    `username` VARCHAR(20),
+    `status` BOOLEAN,
+    `money` FLOAT
+);
+
 CREATE TABLE `user_infor`.`order`(
     `user_id` INT  AUTO_INCREMENT PRIMARY KEY,
     `order_id` INT,

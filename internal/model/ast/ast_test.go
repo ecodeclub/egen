@@ -17,6 +17,8 @@ package ast
 import (
 	"testing"
 
+	"github.com/gotomicro/egen/internal/model"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,11 +38,9 @@ type Into struct {
 	Suburb  string
 }
 
-// @TableName Order
-type Order struct{
-	// @PrimaryKey
-	// @ColName user_id
-	UserId uint32
+type IntoDAO interface{
+	// @select hello
+	Hello(ctx context.Context, name []string) (int64, error)
 }
 `,
 			want: File{
@@ -76,30 +76,23 @@ type Order struct{
 						},
 					},
 					{
-						Annotations: Annotations{
-							Ans: []Annotation{
-								{
-									Key:   "TableName",
-									Value: "Order",
-								},
-							},
-						},
-						GoName: "Order",
-						Fields: []Field{
+						GoName: "IntoDAO",
+						Methods: []Method{
 							{
+								FuncName: "Hello",
+								Params: []model.Parameter{
+									{GoName: "ctx", GoType: "context.Context", Exist: false, HasLen: false},
+									{GoName: "name", GoType: "string", Exist: false, HasLen: false},
+								},
+								Results: []string{"int64", "error"},
 								Annotations: Annotations{
-									Ans: []Annotation{
+									[]Annotation{
 										{
-											Key: "PrimaryKey",
-										},
-										{
-											Key:   "ColName",
-											Value: "user_id",
+											Key:   "select",
+											Value: "hello",
 										},
 									},
 								},
-								GoName: "UserId",
-								GoType: "uint32",
 							},
 						},
 					},

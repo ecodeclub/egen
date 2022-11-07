@@ -37,11 +37,9 @@ type Into struct {
 	Suburb  string
 }
 
-// @TableName Order
-type Order struct{
-	// @PrimaryKey true
-	// @ColName user_id
-	UserId uint32
+type IntoDAO interface{
+	// @select hello
+	Hello(ctx context.Context, name [5]string) (int64, error)
 }
 `, want: []model.Model{
 				model.Model{
@@ -49,16 +47,20 @@ type Order struct{
 					TableName: "into",
 					GoName:    "Into",
 					Fields: []model.Field{
-						model.Field{ColName: "countryside", IsPrimaryKey: false, GoName: "CountrySide", GoType: "string"},
-						model.Field{ColName: "suburb", IsPrimaryKey: true, GoName: "Suburb", GoType: "string"},
+						{ColName: "countryside", IsPrimaryKey: false, GoName: "CountrySide", GoType: "string"},
+						{ColName: "suburb", IsPrimaryKey: true, GoName: "Suburb", GoType: "string"},
 					},
-				},
-				model.Model{
-					PkgName:   "model.",
-					TableName: "Order",
-					GoName:    "Order",
-					Fields: []model.Field{
-						model.Field{ColName: "user_id", IsPrimaryKey: true, GoName: "UserId", GoType: "uint32"},
+					Methods: []model.Method{
+						{
+							FuncName:    "Hello",
+							SqlType:     "select",
+							SqlSentence: "hello",
+							Params: []model.Parameter{
+								{GoName: "ctx", GoType: "context.Context", Exist: false, HasLen: false},
+								{GoName: "name", GoType: "[5]string", Exist: false, HasLen: false},
+							},
+							Results: []string{"int64", "error"},
+						},
 					},
 				},
 			},
@@ -71,6 +73,5 @@ type Order struct{
 
 func TestConvert(t *testing.T) {
 	assert.Equal(t, "first_name", Convert("FirstName"))
-	assert.Equal(t, "order", Convert("Order"))
 	assert.Equal(t, "into", Convert("into"))
 }

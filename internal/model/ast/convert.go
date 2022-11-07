@@ -22,21 +22,35 @@ import (
 )
 
 func ParseModel(contents File, options ...model.Option) []model.Model {
+	// 一个结构体 + 一个接口
 	var models = make([]model.Model, 0, len(contents.TypeNodes))
-	for _, v := range contents.TypeNodes {
-		models = append(models, parseNode(v))
-	}
-	for k := range models {
+	for _, value := range contents.TypeNodes {
+		one := parseNode(value)
+		one.PkgName = contents.PkgName + "."
+
 		for _, option := range options {
-			option(&models[k])
+			option(&one)
 		}
-		models[k].PkgName = contents.PkgName + "."
+
+		if len(one.Methods) <= 0 {
+			models = append(models, one)
+			continue
+		}
+
+		for i := 0; i < len(models); i++ {
+			if models[i].GoName+"DAO" == one.GoName {
+				models[i].Methods = make([]model.Method, len(one.Methods))
+				copy(models[i].Methods, one.Methods)
+			}
+		}
 	}
+
 	return models
 }
 
 func parseNode(typeNode TypeNode) model.Model {
-	fields := make([]model.Field, 0, len(typeNode.Fields))
+	var methods []model.Method
+	var fields []model.Field
 	tableName := Convert(typeNode.GoName)
 
 	for _, v := range typeNode.Ans {
@@ -44,14 +58,30 @@ func parseNode(typeNode TypeNode) model.Model {
 			tableName = v.Value
 		}
 	}
-	for _, v := range typeNode.Fields {
-		fields = append(fields, parseField(v))
+
+	if len(typeNode.Fields) > 0 {
+		fields = make([]model.Field, 0, len(typeNode.Fields))
+		for _, v := range typeNode.Fields {
+			fields = append(fields, parseField(v))
+		}
+	}
+
+	if len(typeNode.Methods) > 0 {
+		methods = make([]model.Method, 0, len(typeNode.Methods))
+		for _, v := range typeNode.Methods {
+			methods = append(methods, ParseMethods(v))
+		}
+		return model.Model{
+			GoName:  typeNode.GoName,
+			Methods: methods,
+		}
 	}
 
 	return model.Model{
 		GoName:    typeNode.GoName,
 		TableName: tableName,
 		Fields:    fields,
+		Methods:   methods,
 	}
 }
 
@@ -73,6 +103,23 @@ func parseField(field Field) model.Field {
 		IsPrimaryKey: isPrimaryKey,
 		GoName:       field.GoName,
 		GoType:       field.GoType,
+	}
+}
+
+func ParseMethods(method Method) model.Method {
+	if len(method.Ans) > 0 {
+		return model.Method{
+			FuncName:    method.FuncName,
+			SqlType:     method.Ans[0].Key,
+			SqlSentence: method.Ans[0].Value,
+			Params:      method.Params,
+			Results:     method.Results,
+		}
+	}
+	return model.Method{
+		FuncName: method.FuncName,
+		Params:   method.Params,
+		Results:  method.Results,
 	}
 }
 

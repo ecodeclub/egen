@@ -18,7 +18,7 @@ import (
 type UserDAOTestSuite struct {
 	suite.Suite
 	ctx context.Context
-	dao *UserDAO
+	dao *UserGenDAO
 }
 
 func connectDatabase(driver, config string) *sql.DB {
@@ -43,7 +43,7 @@ func (d *UserDAOTestSuite) deleteAll() (int64, error) {
 
 func (d *UserDAOTestSuite) SetupSuite() {
 	d.ctx = context.Background()
-	d.dao, _ = NewUserDAO(connectDatabase("mysql", "root:root@tcp(127.0.0.1:13306)/user_infor"))
+	d.dao, _ = NewUserGenDAO(connectDatabase("mysql", "root:root@tcp(127.0.0.1:13306)/user_infor"))
 }
 
 func (d *UserDAOTestSuite) TearDownSuite() {

@@ -1,6 +1,6 @@
 //go:build e2e
 
-package second
+package test_tx
 
 import (
 	"context"
@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type UserDAOTestSuite struct {
+type UserDAOTxTestSuite struct {
 	suite.Suite
 	ctx context.Context
-	dao *UserDAO
+	dao *UserTxGenDAO
 }
 
 func connectDatabase(driver, config string) *sql.DB {
@@ -37,24 +37,29 @@ func connectDatabase(driver, config string) *sql.DB {
 	return common
 }
 
-func (d *UserDAOTestSuite) deleteAll() (int64, error) {
+func (d *UserDAOTxTestSuite) deleteAll() (int64, error) {
 	return d.dao.DeleteByWhere(d.ctx, "1=1")
 }
 
-func (d *UserDAOTestSuite) SetupSuite() {
+func (d *UserDAOTxTestSuite) SetupSuite() {
 	d.ctx = context.Background()
-	d.dao, _ = NewUserDAO(connectDatabase("mysql", "root:root@tcp(127.0.0.1:13306)/user_infor"))
 }
 
-func (d *UserDAOTestSuite) TearDownSuite() {
-	d.dao.session.(*sql.DB).Close()
+func (d *UserDAOTxTestSuite) SetupTest() {
+	var err error
+	dao, _ := NewUserGenDAO(connectDatabase("mysql", "root:root@tcp(127.0.0.1:13306)/user_infor"))
+	d.dao, err = dao.Begin(d.ctx, &sql.TxOptions{})
+	if err != nil {
+		log.Println("开启事务失败", err)
+	}
 }
 
-func (d *UserDAOTestSuite) TestUserDAO_Insert() {
+func (d *UserDAOTxTestSuite) TestUserDAO_Insert() {
 	users := []*integration.User{
 		{1, "first", "123", "8.21"},
 		{2, "second", "123", "8.22"},
 	}
+
 	ret, err := d.dao.Insert(d.ctx, users...)
 	t := d.T()
 
@@ -71,9 +76,11 @@ func (d *UserDAOTestSuite) TestUserDAO_Insert() {
 	assert.Equal(t, nil, err)
 
 	d.deleteAll()
+
+	d.dao.Commit()
 }
 
-func (d *UserDAOTestSuite) TestUserDAO_SelectByWhere() {
+func (d *UserDAOTxTestSuite) TestUserDAO_SelectByWhere() {
 	t := d.T()
 	ret, err := d.dao.Insert(d.ctx, &integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"})
 	assert.Equal(t, int64(1), ret)
@@ -84,9 +91,11 @@ func (d *UserDAOTestSuite) TestUserDAO_SelectByWhere() {
 	assert.Equal(t, nil, err)
 
 	d.deleteAll()
+
+	d.dao.Commit()
 }
 
-func (d *UserDAOTestSuite) TestUserDAO_SelectBatchByRaw() {
+func (d *UserDAOTxTestSuite) TestUserDAO_SelectBatchByRaw() {
 	t := d.T()
 
 	ret, err := d.dao.Insert(d.ctx, []*integration.User{
@@ -104,9 +113,11 @@ func (d *UserDAOTestSuite) TestUserDAO_SelectBatchByRaw() {
 	assert.Equal(t, nil, err)
 
 	d.deleteAll()
+
+	d.dao.Commit()
 }
 
-func (d *UserDAOTestSuite) TestUserDAO_UpdateNoneZeroColByWhere() {
+func (d *UserDAOTxTestSuite) TestUserDAO_UpdateNoneZeroColByWhere() {
 	t := d.T()
 	user := integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"}
 	ret, err := d.dao.Insert(d.ctx, &user)
@@ -124,9 +135,11 @@ func (d *UserDAOTestSuite) TestUserDAO_UpdateNoneZeroColByWhere() {
 	assert.Equal(t, nil, err)
 
 	d.deleteAll()
+
+	d.dao.Commit()
 }
 
-func (d *UserDAOTestSuite) TestUserDAO_UpdateNonePKColByWhere() {
+func (d *UserDAOTxTestSuite) TestUserDAO_UpdateNonePKColByWhere() {
 	t := d.T()
 
 	user := integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"}
@@ -146,9 +159,11 @@ func (d *UserDAOTestSuite) TestUserDAO_UpdateNonePKColByWhere() {
 	assert.Equal(t, nil, err)
 
 	d.deleteAll()
+
+	d.dao.Commit()
 }
 
-func (d *UserDAOTestSuite) TestUserDAO_UpdateSpecificColsByWhere() {
+func (d *UserDAOTxTestSuite) TestUserDAO_UpdateSpecificColsByWhere() {
 	t := d.T()
 
 	user := integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"}
@@ -167,9 +182,11 @@ func (d *UserDAOTestSuite) TestUserDAO_UpdateSpecificColsByWhere() {
 	assert.Equal(t, nil, err)
 
 	d.deleteAll()
+
+	d.dao.Commit()
 }
 
-func (d *UserDAOTestSuite) TestUserDAO_DeleteByWhere() {
+func (d *UserDAOTxTestSuite) TestUserDAO_DeleteByWhere() {
 	t := d.T()
 	ret, err := d.dao.Insert(d.ctx, &integration.User{ID: 1, Username: "first", Password: "123", Login: "8.21"})
 	assert.Equal(t, int64(1), ret)
@@ -178,8 +195,10 @@ func (d *UserDAOTestSuite) TestUserDAO_DeleteByWhere() {
 	ret, err = d.dao.DeleteByWhere(d.ctx, "id=?", 1)
 	assert.Equal(t, int64(1), ret)
 	assert.Equal(t, nil, err)
+
+	d.dao.Commit()
 }
 
 func Test_All(t *testing.T) {
-	suite.Run(t, new(UserDAOTestSuite))
+	suite.Run(t, new(UserDAOTxTestSuite))
 }
